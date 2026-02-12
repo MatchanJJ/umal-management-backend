@@ -22,7 +22,7 @@ class Member extends Model
 
     public $timestamps = true;
 
-    //Relationships
+    // Relationships
     public function college(){
         return $this->belongsTo(College::class, 'college_id');
     }
@@ -34,6 +34,7 @@ class Member extends Model
     public function schedules(){
         return $this->hasMany(MemberSchedule::class);
     }
+    
     public function availability() {
         return $this->hasMany(MemberAvailability::class);
     }
@@ -42,4 +43,33 @@ class Member extends Model
         return $this->hasMany(VolunteerAssignment::class);
     }
 
+    // Scopes
+    public function scopeStudents($query) {
+        return $query->where('role', 'member');
+    }
+
+    public function scopeAdvisers($query) {
+        return $query->where('role', 'adviser');
+    }
+
+    public function scopeAdmins($query) {
+        return $query->where('role', 'admin');
+    }
+
+    // Helper methods
+    public function isStudent() {
+        return $this->role === 'member';
+    }
+
+    public function isAdviser() {
+        return $this->role === 'adviser';
+    }
+
+    public function isAdmin() {
+        return $this->role === 'admin';
+    }
+
+    public function getFullNameAttribute() {
+        return "{$this->first_name} {$this->last_name}";
+    }
 }
