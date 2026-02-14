@@ -17,11 +17,12 @@ class MembersSeeder extends Seeder
         $members = [
             // Demo Admin User (external entity - no student data)
             [
+                'org_id' => 1,
+                'role_id' => 1, // admin
                 'student_number' => null,
                 'first_name' => 'Admin',
                 'last_name' => 'User',
                 'email' => 'admin@university.edu.ph',
-                'role' => 'admin',
                 'year_level' => null,
                 'college_id' => null, 
                 'course_id' => null, 
@@ -32,11 +33,12 @@ class MembersSeeder extends Seeder
             
             // Demo Adviser User (faculty member - oversees events & participates in shifts)
             [
+                'org_id' => 1,
+                'role_id' => 2, // adviser
                 'student_number' => null,
                 'first_name' => 'Maria',
                 'last_name' => 'Rodriguez',
                 'email' => 'adviser@university.edu.ph',
-                'role' => 'adviser',
                 'year_level' => null,
                 'college_id' => null, 
                 'course_id' => null, 
@@ -47,11 +49,12 @@ class MembersSeeder extends Seeder
             
             // Sample Members
             [
+                'org_id' => 1,
+                'role_id' => 3, // member
                 'student_number' => '2021-00123',
                 'first_name' => 'Juan',
                 'last_name' => 'Dela Cruz',
                 'email' => 'juan.delacruz@university.edu.ph',
-                'role' => 'member',
                 'year_level' => '3',
                 'college_id' => 1, 
                 'course_id' => 1, 
@@ -60,11 +63,12 @@ class MembersSeeder extends Seeder
                 'created_at' => Carbon::now(),
             ],
             [
+                'org_id' => 1,
+                'role_id' => 3, // member
                 'student_number' => '2022-00456',
                 'first_name' => 'Maria',
                 'last_name' => 'Santos',
                 'email' => 'maria.santos@university.edu.ph',
-                'role' => 'member',
                 'year_level' => '2',
                 'college_id' => 2, 
                 'course_id' => 5, 
@@ -73,11 +77,12 @@ class MembersSeeder extends Seeder
                 'created_at' => Carbon::now(),
             ],
             [
+                'org_id' => 1,
+                'role_id' => 3, // member
                 'student_number' => '2021-00789',
                 'first_name' => 'Pedro',
                 'last_name' => 'Reyes',
                 'email' => 'pedro.reyes@university.edu.ph',
-                'role' => 'member',
                 'year_level' => '3',
                 'college_id' => 3, 
                 'course_id' => 9, 
