@@ -13,22 +13,29 @@ class DatabaseSeeder extends Seeder
     {
         // Seed reference data in order (respecting foreign key constraints)
         $this->call([
-            // Step 1: Independent tables (no foreign keys)
+            // Step 1: Organizations and Roles (new foundational tables)
+            OrganizationsSeeder::class,
+            RolesSeeder::class,
+            
+            // Step 2: Independent tables (no foreign keys)
             CollegesSeeder::class,
             SemestersSeeder::class,
             ScheduleTemplatesSeeder::class,
             TimeSlotsSeeder::class,
             
-            // Step 2: Tables with foreign keys to Step 1
+            // Step 3: Tables with foreign keys to Step 2
             CoursesSeeder::class,
             TermsSeeder::class,
             ScheduleTemplateDaysSeeder::class,
             
-            // Step 3: Member whitelist (before members)
+            // Step 4: Member whitelist (before members)
             MemberWhitelistSeeder::class,
             
-            // Step 4: Members (depends on colleges & courses)
+            // Step 5: Members (depends on organizations, roles, colleges & courses)
             MembersSeeder::class,
+            
+            // Step 6: Events (depends on members for created_by)
+            EventsSeeder::class,
         ]);
     }
 }

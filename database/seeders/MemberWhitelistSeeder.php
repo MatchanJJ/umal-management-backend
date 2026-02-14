@@ -49,6 +49,6 @@ class MemberWhitelistSeeder extends Seeder
             ],
         ];
 
-        DB::table('member_whitelists')->insert($whitelists);
+        DB::table('member_whitelist')->insert($whitelists);
     }
 }
