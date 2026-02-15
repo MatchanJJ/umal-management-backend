@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Member extends Model
+class Member extends Authenticatable
 {
+    use Notifiable;
+
     protected $table = 'members';
     protected $fillable = [
         'org_id',
@@ -14,11 +17,24 @@ class Member extends Model
         'first_name', 
         'last_name', 
         'email',
+        'password',
+        'google_id',
+        'email_verified_at',
         'year_level', 
         'college_id', 
         'course_id',
         'height', 
         'tshirt_size'
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     public $timestamps = true;
