@@ -1,6 +1,6 @@
 """
 AssignAI NLP Microservice
-FastAPI service for parsing volunteer scheduling requests using semantic similarity.
+FastAPI service for parsing volunteer scheduling requests and fair assignment prediction.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -11,6 +11,7 @@ import os
 
 from train_index import EmbeddingIndexer
 from parser import VolunteerRequestParser
+from assignment_predictor import AssignmentPredictor
 
 
 # Request/Response Models
@@ -21,13 +22,38 @@ class ParseRequest(BaseModel):
 
 
 class ParseResponse(BaseModel):
-    """Output model for parse endpoint."""
-    role: str = Field(..., description="Extracted volunteer role")
+    """Output model for parse endpoint (NO role - all members can do all tasks)."""
     day: Optional[str] = Field(None, description="Day of the week")
     time_block: Optional[str] = Field(None, description="Morning or Afternoon")
     slots_needed: int = Field(..., description="Number of volunteers needed")
     confidence: float = Field(..., description="Confidence score (0-1)")
     top_match: str = Field(..., description="Most similar training example")
+
+
+class MemberData(BaseModel):
+    """Member data for assignment prediction"""
+    member_id: str
+    is_available: int = Field(..., ge=0, le=1, description="1=available, 0=not available")
+    assignments_last_7_days: int = Field(0, ge=0)
+    assignments_last_30_days: int = Field(0, ge=0)
+    days_since_last_assignment: int = Field(30, ge=0)
+    attendance_rate: float = Field(0.8, ge=0.0, le=1.0)
+
+
+class AssignmentRequest(BaseModel):
+    """Request for fair assignment prediction"""
+    members: List[MemberData] = Field(..., min_items=1)
+    event_date: str = Field(..., description="Event date (YYYY-MM-DD)")
+    event_size: int = Field(..., ge=1, description="Number of volunteers needed")
+
+
+class AssignmentResponse(BaseModel):
+    """Response with recommended assignments"""
+    recommended: List[Dict]
+    all_candidates: List[Dict]
+    event_size: int
+    coverage: bool
+    shortfall: int
 
 
 class BatchParseRequest(BaseModel):
@@ -40,7 +66,7 @@ class HealthResponse(BaseModel):
     status: str
     model: str
     index_size: int
-    canonical_roles: List[str]
+    assignment_model_loaded: bool
 
 
 # Initialize FastAPI app
@@ -61,14 +87,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global parser instance
+# Global parser and predictor instances
 parser: Optional[VolunteerRequestParser] = None
+assignment_predictor: Optional[AssignmentPredictor] = None
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Load model and index on startup."""
-    global parser
+    """Load models and index on startup."""
+    global parser, assignment_predictor
     
     print("=" * 60)
     print("AssignAI NLP Service Starting...")
@@ -81,7 +108,7 @@ async def startup_event():
                 "Index not found! Please run 'python train_index.py' first to build the index."
             )
         
-        # Load index
+        # Load index for text parsing
         print("Loading embedding index...")
         indexer = EmbeddingIndexer()
         embeddings, dataset = indexer.load_index('./index')
@@ -89,6 +116,20 @@ async def startup_event():
         # Initialize parser
         print("Initializing parser...")
         parser = VolunteerRequestParser(embeddings, dataset)
+        
+        # Load assignment predictor (optional, won't fail startup if missing)
+        try:
+            print("Loading assignment predictor...")
+            assignment_predictor = AssignmentPredictor(
+                model_path='../assignai_model.pkl',
+                scaler_path='../assignai_model_scaler.pkl'
+            )
+        except FileNotFoundError:
+            print("⚠️  Assignment model not found. Run:")
+            print("   1. python generate_assignment_dataset.py")
+            print("   2. python train_assignment_model.py")
+            print("   Assignment prediction endpoints will be unavailable.")
+            assignment_predictor = None
         
         print("=" * 60)
         print("Service ready! Access API docs at: http://localhost:8000/docs")
@@ -120,7 +161,7 @@ async def health_check():
         status="healthy",
         model="all-MiniLM-L6-v2",
         index_size=len(parser.dataset),
-        canonical_roles=parser.CANONICAL_ROLES
+        assignment_model_loaded=assignment_predictor is not None
     )
 
 
@@ -129,22 +170,24 @@ async def parse_request(request: ParseRequest):
     """
     Parse a natural language volunteer request into structured fields.
     
+    NO role extraction - all members can perform all tasks.
+    Focus on day, time, and number of volunteers needed.
+    
     Example:
     ```json
     {
-        "text": "Need 5 students Friday morning for campus tour"
+        "text": "Need 5 students Friday morning"
     }
     ```
     
     Returns:
     ```json
     {
-        "role": "Campus Tour",
         "day": "Friday",
         "time_block": "Morning",
         "slots_needed": 5,
         "confidence": 0.87,
-        "top_match": "Need 4 volunteers Friday morning for campus tour."
+        "top_match": "Need 4 volunteers Friday morning."
     }
     ```
     """
@@ -167,8 +210,8 @@ async def parse_batch(request: BatchParseRequest):
     ```json
     {
         "texts": [
-            "Need 3 ushers Monday afternoon",
-            "Looking for 5 volunteers for campus tour Wednesday morning"
+            "Need 3 volunteers Monday afternoon",
+            "Looking for 5 people Wednesday morning"
         ]
     }
     ```
@@ -183,37 +226,75 @@ async def parse_batch(request: BatchParseRequest):
         raise HTTPException(status_code=500, detail=f"Batch parsing failed: {str(e)}")
 
 
-@app.post("/role-similarity")
-async def get_role_similarity(request: ParseRequest):
+@app.post("/predict-assignments", response_model=AssignmentResponse)
+async def predict_assignments(request: AssignmentRequest):
     """
-    Get similarity scores for each canonical role.
+    Predict fair volunteer assignments using ML model.
     
-    Useful for debugging and understanding role classification.
+    Based on availability, participation history, and fairness principles.
+    NO role-based assignment - all members can do all tasks.
+    
+    Example:
+    ```json
+    {
+        "members": [
+            {
+                "member_id": "M001",
+                "is_available": 1,
+                "assignments_last_7_days": 0,
+                "assignments_last_30_days": 2,
+                "days_since_last_assignment": 15,
+                "attendance_rate": 0.95
+            }
+        ],
+        "event_date": "2026-02-21",
+        "event_size": 3
+    }
+    ```
+    
+    Returns top N candidates ranked by fairness and availability.
     """
-    if parser is None:
-        raise HTTPException(status_code=503, detail="Parser not initialized")
+    if assignment_predictor is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Assignment predictor not loaded. Please train the model first."
+        )
     
     try:
-        scores = parser.get_role_similarity(request.text)
-        return {
-            "text": request.text,
-            "role_scores": scores,
-            "predicted_role": max(scores, key=scores.get)
-        }
+        # Convert Pydantic models to dicts
+        members_data = [member.dict() for member in request.members]
+        
+        # Get recommendations
+        result = assignment_predictor.recommend_assignments(
+            members_data,
+            request.event_date,
+            request.event_size
+        )
+        
+        return AssignmentResponse(**result)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Assignment prediction failed: {str(e)}")
 
 
-@app.get("/roles")
-async def list_roles():
-    """List all canonical volunteer roles."""
-    if parser is None:
-        raise HTTPException(status_code=503, detail="Parser not initialized")
+@app.post("/explain-assignment")
+async def explain_assignment(member: MemberData, event_date: str, event_size: int):
+    """
+    Explain why a specific member was/wasn't recommended for assignment.
     
-    return {
-        "roles": parser.CANONICAL_ROLES,
-        "count": len(parser.CANONICAL_ROLES)
-    }
+    Useful for transparency and debugging.
+    """
+    if assignment_predictor is None:
+        raise HTTPException(status_code=503, detail="Assignment predictor not loaded")
+    
+    try:
+        explanation = assignment_predictor.explain_prediction(
+            member.dict(),
+            event_date,
+            event_size
+        )
+        return explanation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Explanation failed: {str(e)}")
 
 
 @app.get("/days")
