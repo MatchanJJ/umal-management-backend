@@ -21,17 +21,6 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 class VolunteerRequestParser:
     """Semantic parser for volunteer scheduling requests."""
     
-    # Canonical role labels
-    CANONICAL_ROLES = [
-        "Career Guidance",
-        "Ushering",
-        "Campus Tour",
-        "Photoshoot Appearance",
-        "Video Appearance",
-        "Program Assistance",
-        "Event Setup"
-    ]
-    
     # Days mapping
     DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     
@@ -64,7 +53,7 @@ class VolunteerRequestParser:
             top_k: Number of similar examples to consider
             
         Returns:
-            Dictionary with role, day, time_block, slots_needed
+            Dictionary with day, time_block, slots_needed (NO role - all members can do all tasks)
         """
         # Encode input text
         query_embedding = self.model.encode([text], convert_to_numpy=True)
@@ -76,9 +65,8 @@ class VolunteerRequestParser:
         # Get top matches
         top_matches = self.dataset.iloc[top_indices]
         
-        # Extract fields using multiple strategies
+        # Extract fields (NO role - removed as per requirements)
         result = {
-            'role': self._extract_role(text, top_matches),
             'day': self._extract_day(text, top_matches),
             'time_block': self._extract_time_block(text, top_matches),
             'slots_needed': self._extract_slots(text, top_matches),
@@ -89,19 +77,6 @@ class VolunteerRequestParser:
         result['top_match'] = top_matches.iloc[0]['event_text']
         
         return result
-    
-    def _extract_role(self, text: str, top_matches) -> str:
-        """Extract role using semantic similarity from top matches."""
-        # Use most common role from top matches
-        role_counts = top_matches['role'].value_counts()
-        most_common_role = role_counts.index[0]
-        
-        # Validate it's a canonical role
-        if most_common_role in self.CANONICAL_ROLES:
-            return most_common_role
-        
-        # Fallback: use first match
-        return top_matches.iloc[0]['role']
     
     def _extract_day(self, text: str, top_matches) -> Optional[str]:
         """Extract day of the week from text."""
@@ -151,24 +126,6 @@ class VolunteerRequestParser:
     def batch_parse(self, texts: List[str]) -> List[Dict]:
         """Parse multiple requests in batch."""
         return [self.parse(text) for text in texts]
-    
-    def get_role_similarity(self, text: str) -> Dict[str, float]:
-        """Get similarity scores for each canonical role."""
-        query_embedding = self.model.encode([text], convert_to_numpy=True)
-        
-        role_scores = {}
-        for role in self.CANONICAL_ROLES:
-            # Find examples of this role in dataset
-            role_examples = self.dataset[self.dataset['role'] == role]
-            if len(role_examples) > 0:
-                role_indices = role_examples.index.tolist()
-                role_embeddings = self.embeddings[role_indices]
-                
-                # Calculate average similarity
-                similarities = cosine_similarity(query_embedding, role_embeddings)[0]
-                role_scores[role] = float(np.mean(similarities))
-        
-        return role_scores
 
 
 def test_parser():
@@ -182,24 +139,23 @@ def test_parser():
     print("\nInitializing parser...")
     parser = VolunteerRequestParser(embeddings, dataset)
     
-    # Test cases
+    # Test cases (NO role - all members can do all tasks)
     test_cases = [
-        "Need 5 students Friday morning for campus tour.",
-        "Looking for ushers this Wednesday afternoon.",
-        "Assign 3 volunteers for career guidance on Monday AM.",
-        "We need 4 people for video shoot Tuesday afternoon.",
-        "Get me 2 volunteers for event setup Saturday morning.",
+        "Need 5 students Friday morning",
+        "Looking for 3 volunteers this Wednesday afternoon",
+        "Assign 4 members on Monday AM",
+        "We need 2 people for Tuesday afternoon event",
+        "Get me 6 volunteers for Saturday morning",
     ]
     
     print("\n" + "=" * 60)
-    print("Testing Parser")
+    print("Testing Parser (Role-Free)")
     print("=" * 60)
     
     for text in test_cases:
         print(f"\nInput: {text}")
         result = parser.parse(text)
         print(f"Output:")
-        print(f"  Role: {result['role']}")
         print(f"  Day: {result['day']}")
         print(f"  Time: {result['time_block']}")
         print(f"  Slots: {result['slots_needed']}")
