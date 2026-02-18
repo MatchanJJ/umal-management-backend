@@ -40,4 +40,9 @@ return [
     'redirect' => env('GOOGLE_REDIRECT_URI'),
 ],
 
+    'nlp' => [
+        'url' => env('NLP_SERVICE_URL', 'http://localhost:8001'),
+        'timeout' => env('NLP_SERVICE_TIMEOUT', 30),
+    ],
+
 ];

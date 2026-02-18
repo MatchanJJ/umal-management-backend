@@ -3,8 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Models\Organization;
 
 class OrganizationsSeeder extends Seeder
 {
@@ -13,15 +12,11 @@ class OrganizationsSeeder extends Seeder
      */
     public function run(): void
     {
-        $organizations = [
-            [
-                'name' => 'University of Mindanao Ambassadors League',
-                'description' => 'A university organization that promotes leadership and community service among students.',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-        ];
+        Organization::firstOrCreate(
+            ['name' => 'University of Mindanao Ambassadors League'],
+            ['description' => 'A university organization that promotes leadership and community service among students.']
+        );
 
-        DB::table('organizations')->insert($organizations);
+        $this->command->info('Organizations seeded successfully!');
     }
 }

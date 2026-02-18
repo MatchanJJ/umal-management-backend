@@ -3,8 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Models\MemberWhitelist;
 
 class MemberWhitelistSeeder extends Seeder
 {
@@ -16,39 +15,46 @@ class MemberWhitelistSeeder extends Seeder
         $whitelists = [
             // Pre-approved admin
             [
-                'email' => 'admin@university.edu.ph',
+                'email' => 'm.palma.546616@umindanao.edu.ph',
                 'approved_by' => null,
                 'approved_role' => 'admin',
                 'status' => 'approved',
-                'created_at' => Carbon::now(),
             ],
             
             // Pre-approved adviser
             [
-                'email' => 'adviser@university.edu.ph',
+                'email' => 'adviser@umindanao.edu.ph',
                 'approved_by' => null,
                 'approved_role' => 'adviser',
                 'status' => 'approved',
-                'created_at' => Carbon::now(),
             ],
             
             // Sample pending applications
             [
-                'email' => 'juan.delacruz@university.edu.ph',
+                'email' => 'juan.delacruz@umindanao.edu.ph',
                 'approved_by' => null,
                 'approved_role' => 'member',
                 'status' => 'pending',
-                'created_at' => Carbon::now(),
             ],
             [
-                'email' => 'maria.santos@university.edu.ph',
+                'email' => 'maria.santos@umindanao.edu.ph',
                 'approved_by' => null,
                 'approved_role' => 'member',
                 'status' => 'pending',
-                'created_at' => Carbon::now(),
             ],
         ];
 
-        DB::table('member_whitelist')->insert($whitelists);
+        foreach ($whitelists as $whitelist) {
+            MemberWhitelist::firstOrCreate(
+                ['email' => $whitelist['email']],
+                [
+                    'approved_by' => $whitelist['approved_by'],
+                    'approved_role' => $whitelist['approved_role'],
+                    'status' => $whitelist['status'],
+                ]
+            );
+        }
+
+        $this->command->info('Member whitelist seeded successfully!');
     }
 }

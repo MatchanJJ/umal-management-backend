@@ -1,6 +1,6 @@
 You are helping build a dataset for an NLP system called **AssignAI**, an Agentic NLP-Based Volunteer Scheduling and Assignment System.
 
-### 🎯 Goal
+###  Goal
 
 Generate a **synthetic training dataset (CSV format)** that simulates how organization administrators request volunteers using natural language.
 
@@ -13,7 +13,7 @@ This dataset will be used to train an NLP model that extracts:
 
 ---
 
-### 📌 Context of the Organization
+###  Context of the Organization
 
 This is a **college organization** whose members conduct outreach and promotional activities for Senior High School (SHS) students.
 
@@ -31,7 +31,7 @@ These MUST be the only roles used in the dataset.
 
 ---
 
-### 📊 Dataset Requirements
+### Dataset Requirements
 
 Generate **400–500 rows** with the following columns:
 
@@ -45,7 +45,7 @@ Generate **400–500 rows** with the following columns:
 
 ---
 
-### 🧠 The `event_text` Must Sound Natural
+###  The `event_text` Must Sound Natural
 
 Admins DO NOT speak in structured format.
 Use varied phrasing such as:
@@ -66,7 +66,7 @@ Important:
 
 ---
 
-### 📅 Allowed Values
+###  Allowed Values
 
 Days:
 Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
@@ -79,7 +79,7 @@ Random integer from 1 to 10
 
 ---
 
-### 📁 Output Format
+###  Output Format
 
 Save as:
 
@@ -90,13 +90,13 @@ No index column.
 
 ---
 
-### 🛠 Example Row (DO NOT COPY)
+###  Example Row (DO NOT COPY)
 
 "Need 4 volunteers Monday morning for campus tour.",Monday,Morning,4,Campus Tour
 
 ---
 
-### ❗Important
+### Important
 
 This dataset is for **training an intent + slot extraction model**, so linguistic variation is more important than perfect grammar.
 

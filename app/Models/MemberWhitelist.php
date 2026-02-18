@@ -84,7 +84,7 @@ class MemberWhitelist extends Model
     public static function validateUniversityEmail($email)
     {
         // Validate university email domain - adjust domain as needed
-        $allowedDomains = ['university.edu.ph', 'uc-bcf.edu.ph']; // Add your university domains
+        $allowedDomains = ['university.edu.ph', 'uc-bcf.edu.ph', 'umindanao.edu.ph']; // Add your university domains
         
         $domain = substr(strrchr($email, "@"), 1);
         

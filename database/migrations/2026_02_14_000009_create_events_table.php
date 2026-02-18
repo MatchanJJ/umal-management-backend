@@ -15,6 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('title', 255)->nullable(false);
             $table->text('description')->nullable();
+            $table->date('date')->nullable(false);
+            $table->enum('time_block', ['Morning', 'Afternoon'])->nullable(false);
+            $table->string('venue', 255)->nullable();
+            $table->integer('required_volunteers')->default(1);
+            $table->integer('assigned_volunteers')->default(0);
             $table->foreignId('created_by')->nullable()->constrained('members')->onDelete('set null');
             $table->string('status', 20)->default('draft');
             $table->timestamp('created_at')->useCurrent();

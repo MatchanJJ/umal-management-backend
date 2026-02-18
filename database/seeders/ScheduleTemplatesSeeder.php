@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\ScheduleTemplate;
 
 class ScheduleTemplatesSeeder extends Seeder
 {
@@ -27,6 +27,13 @@ class ScheduleTemplatesSeeder extends Seeder
             ]
         ];
 
-        DB::table('schedule_templates')->insert($templates);
+        foreach ($templates as $template) {
+            ScheduleTemplate::firstOrCreate(
+                ['code' => $template['code']],
+                ['description' => $template['description']]
+            );
+        }
+
+        $this->command->info('Schedule templates seeded successfully!');
     }
 }

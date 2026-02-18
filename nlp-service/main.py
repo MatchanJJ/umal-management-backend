@@ -314,11 +314,13 @@ if __name__ == "__main__":
     
     print("\nStarting AssignAI NLP Service...")
     print("Make sure you've built the index first: python train_index.py\n")
+    print("NLP API will run on: http://localhost:8001")
+    print("API Documentation at: http://localhost:8001/docs\n")
     
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=True,
         log_level="info"
     )
