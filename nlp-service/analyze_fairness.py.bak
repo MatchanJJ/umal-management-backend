@@ -1,0 +1,347 @@
+"""
+Fairness Analysis Script
+
+Analyzes volunteer assignment patterns for demographic bias across colleges
+and year levels. Computes demographic parity and disparate impact metrics.
+"""
+
+import sqlite3
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+from typing import Dict, List
+from scipy.stats import chi2_contingency
+
+
+class FairnessAnalyzer:
+    """Analyzes fairness of volunteer assignments across demographics"""
+    
+    def __init__(self, db_path='../database/database.sqlite'):
+        """
+        Initialize fairness analyzer with database connection.
+        
+        Args:
+            db_path: Path to SQLite database
+        """
+        self.db_path = db_path
+        self.metrics = {}
+        
+        # Check if database exists
+        import os
+        if not os.path.exists(self.db_path):
+            print(f"⚠️  Database not found at: {self.db_path}")
+            print(f"   Current directory: {os.getcwd()}")
+            print(f"   Absolute path: {os.path.abspath(self.db_path)}")
+            # Try alternative paths
+            alt_paths = [
+                '../database/database.sqlite',
+                './database/database.sqlite',
+                '../../database/database.sqlite',
+            ]
+            for alt_path in alt_paths:
+                if os.path.exists(alt_path):
+                    self.db_path = alt_path
+                    print(f"✅ Found database at: {alt_path}")
+                    break
+    
+    def analyze_recent_assignments(self, days=90) -> Dict:
+        """
+        Analyze assignments from the last N days for fairness.
+        
+        Args:
+            days: Number of days to look back
+            
+        Returns:
+            Dictionary with fairness metrics
+        """
+        # Check if database exists
+        import os
+        if not os.path.exists(self.db_path):
+            return {
+                'success': False,
+                'error': f'Database not found at path: {self.db_path}',
+                'message': f'Database file does not exist. Please check the path.',
+                'db_path': self.db_path,
+                'cwd': os.getcwd()
+            }
+        
+        try:
+            # Connect to database
+            conn = sqlite3.connect(self.db_path)
+            
+            # Calculate cutoff date
+            cutoff_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+            
+            # Query recent assignments with member demographics
+            query = """
+            SELECT 
+                va.id as assignment_id,
+                va.event_id,
+                va.member_id,
+                va.assigned_at,
+                m.first_name,
+                m.last_name,
+                m.college_id,
+                m.year_level,
+                e.date as event_date,
+                e.title as event_title
+            FROM volunteer_assignments va
+            JOIN members m ON va.member_id = m.id
+            JOIN events e ON va.event_id = e.id
+            WHERE va.assigned_at >= ?
+            ORDER BY va.assigned_at DESC
+            """
+            
+            df = pd.read_sql_query(query, conn, params=[cutoff_date])
+            
+            # Get total eligible members by demographics
+            members_query = """
+            SELECT 
+                id,
+                college_id,
+                year_level
+            FROM members
+            """
+            
+            members_df = pd.read_sql_query(members_query, conn)
+            conn.close()
+            
+            if df.empty:
+                return {
+                    'success': False,
+                    'message': f'No assignments found in last {days} days',
+                    'days_analyzed': days
+                }
+            
+            # Analyze by college
+            college_metrics = self._analyze_by_protected_attribute(
+                df, members_df, 'college_id', 'college'
+            )
+            
+            # Analyze by year level
+            year_metrics = self._analyze_by_protected_attribute(
+                df, members_df, 'year_level', 'year level'
+            )
+            
+            # Overall fairness assessment
+            bias_detected = (
+                college_metrics['demographic_parity'] > 0.20 or
+                college_metrics['disparate_impact'] < 0.80 or
+                year_metrics['demographic_parity'] > 0.20 or
+                year_metrics['disparate_impact'] < 0.80
+            )
+            
+            return {
+                'success': True,
+                'days_analyzed': days,
+                'total_assignments': len(df),
+                'unique_members': df['member_id'].nunique(),
+                'unique_events': df['event_id'].nunique(),
+                'date_range': {
+                    'start': df['assigned_at'].min(),
+                    'end': df['assigned_at'].max()
+                },
+                'college_fairness': college_metrics,
+                'year_level_fairness': year_metrics,
+                'bias_detected': bias_detected,
+                'recommendation': self._generate_recommendation(
+                    college_metrics, year_metrics, bias_detected
+                )
+            }
+        
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'message': f'Failed to analyze assignments: {str(e)}',
+                'db_path': self.db_path,
+                'cwd': os.getcwd()
+            }
+    
+    def _analyze_by_protected_attribute(
+        self, 
+        assignments_df: pd.DataFrame,
+        members_df: pd.DataFrame,
+        attribute: str,
+        attribute_name: str
+    ) -> Dict:
+        """
+        Analyze fairness for a specific protected attribute.
+        
+        Args:
+            assignments_df: DataFrame of assignments
+            members_df: DataFrame of all eligible members
+            attribute: Column name (e.g., 'college_id', 'year_level')
+            attribute_name: Human-readable name
+            
+        Returns:
+            Dictionary with fairness metrics
+        """
+        # Count assignments per attribute value
+        assignment_counts = assignments_df[attribute].value_counts().to_dict()
+        
+        # Count total eligible members per attribute value
+        eligible_counts = members_df[attribute].value_counts().to_dict()
+        
+        # Calculate selection rates
+        selection_rates = {}
+        for attr_value in eligible_counts.keys():
+            assigned = assignment_counts.get(attr_value, 0)
+            eligible = eligible_counts[attr_value]
+            selection_rates[attr_value] = assigned / eligible if eligible > 0 else 0
+        
+        # Calculate demographic parity (max difference in selection rates)
+        if selection_rates:
+            max_rate = max(selection_rates.values())
+            min_rate = min(selection_rates.values())
+            demographic_parity = max_rate - min_rate
+            
+            # Calculate disparate impact (ratio of min to max)
+            disparate_impact = min_rate / max_rate if max_rate > 0 else 0
+        else:
+            demographic_parity = 0
+            disparate_impact = 1.0
+        
+        # Chi-square test for independence
+        contingency_table = self._build_contingency_table(
+            assignments_df, members_df, attribute
+        )
+        
+        # Check if contingency table has sufficient data for chi-square test
+        try:
+            # Ensure no zeros in expected frequencies
+            if contingency_table.size > 0 and contingency_table.sum() > 0:
+                chi2, p_value, dof, expected = chi2_contingency(contingency_table)
+            else:
+                chi2, p_value, dof = None, None, None
+        except ValueError:
+            # Insufficient data for chi-square test
+            chi2, p_value, dof = None, None, None
+        
+        # Fairness assessment
+        is_fair = demographic_parity <= 0.20 and disparate_impact >= 0.80
+        
+        return {
+            'attribute': attribute_name,
+            'selection_rates': {
+                str(k): round(v, 4) for k, v in selection_rates.items()
+            },
+            'assignment_counts': assignment_counts,
+            'eligible_counts': eligible_counts,  # Already a dict
+            'demographic_parity': round(demographic_parity, 4),
+            'disparate_impact': round(disparate_impact, 4),
+            'chi_square': {
+                'statistic': round(chi2, 4) if chi2 is not None else None,
+                'p_value': round(p_value, 4) if p_value is not None else None,
+                'significant': p_value < 0.05 if p_value is not None else None
+            },
+            'is_fair': is_fair,
+            'status': 'FAIR' if is_fair else 'BIASED'
+        }
+    
+    def _build_contingency_table(
+        self, 
+        assignments_df: pd.DataFrame,
+        members_df: pd.DataFrame,
+        attribute: str
+    ) -> np.ndarray:
+        """Build contingency table for chi-square test"""
+        # Count assigned and not assigned per attribute value
+        assigned = assignments_df[attribute].value_counts()
+        
+        table = []
+        for attr_value in members_df[attribute].unique():
+            assigned_count = assigned.get(attr_value, 0)
+            total_eligible = len(members_df[members_df[attribute] == attr_value])
+            not_assigned = total_eligible - assigned_count
+            table.append([assigned_count, max(0, not_assigned)])
+        
+        return np.array(table)
+    
+    def _generate_recommendation(
+        self,
+        college_metrics: Dict,
+        year_metrics: Dict,
+        bias_detected: bool
+    ) -> str:
+        """Generate recommendation based on fairness analysis"""
+        if not bias_detected:
+            return "✅ No significant bias detected. Current assignment process is fair across demographics."
+        
+        recommendations = []
+        
+        if not college_metrics['is_fair']:
+            if college_metrics['demographic_parity'] > 0.20:
+                recommendations.append(
+                    f"⚠️ College bias detected: {college_metrics['demographic_parity']:.2f} "
+                    f"demographic parity (threshold: 0.20)"
+                )
+            if college_metrics['disparate_impact'] < 0.80:
+                recommendations.append(
+                    f"⚠️ Disparate impact across colleges: {college_metrics['disparate_impact']:.2f} "
+                    f"(threshold: 0.80)"
+                )
+        
+        if not year_metrics['is_fair']:
+            if year_metrics['demographic_parity'] > 0.20:
+                recommendations.append(
+                    f"⚠️ Year level bias detected: {year_metrics['demographic_parity']:.2f} "
+                    f"demographic parity (threshold: 0.20)"
+                )
+        
+        recommendations.append("💡 Recommendation: Proceed to Phase 3 - retrain model with fairness constraints")
+        
+        return " | ".join(recommendations)
+
+
+def main():
+    """Run fairness analysis from command line"""
+    print("="*60)
+    print("Fairness Analysis for AssignAI")
+    print("="*60)
+    
+    analyzer = FairnessAnalyzer()
+    
+    # Analyze last 90 days
+    results = analyzer.analyze_recent_assignments(days=90)
+    
+    if not results['success']:
+        print(f"\n❌ {results['message']}")
+        return
+    
+    print(f"\n📊 Analysis Period: {results['days_analyzed']} days")
+    print(f"   Total Assignments: {results['total_assignments']}")
+    print(f"   Unique Members: {results['unique_members']}")
+    print(f"   Unique Events: {results['unique_events']}")
+    
+    print(f"\n🏫 College Fairness:")
+    college = results['college_fairness']
+    print(f"   Status: {college['status']}")
+    print(f"   Demographic Parity: {college['demographic_parity']:.4f} (threshold: ≤0.20)")
+    print(f"   Disparate Impact: {college['disparate_impact']:.4f} (threshold: ≥0.80)")
+    print(f"   Selection Rates by College:")
+    for college_id, rate in college['selection_rates'].items():
+        print(f"      College {college_id}: {rate:.4f}")
+    
+    print(f"\n🎓 Year Level Fairness:")
+    year = results['year_level_fairness']
+    print(f"   Status: {year['status']}")
+    print(f"   Demographic Parity: {year['demographic_parity']:.4f} (threshold: ≤0.20)")
+    print(f"   Disparate Impact: {year['disparate_impact']:.4f} (threshold: ≥0.80)")
+    print(f"   Selection Rates by Year:")
+    for year_level, rate in year['selection_rates'].items():
+        print(f"      Year {year_level}: {rate:.4f}")
+    
+    print(f"\n🎯 Overall Assessment:")
+    if results['bias_detected']:
+        print("   ⚠️ BIAS DETECTED")
+    else:
+        print("   ✅ NO BIAS DETECTED")
+    
+    print(f"\n💡 Recommendation:")
+    print(f"   {results['recommendation']}")
+    print("")
+
+
+if __name__ == '__main__':
+    main()

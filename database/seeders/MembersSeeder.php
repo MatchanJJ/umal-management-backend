@@ -28,6 +28,8 @@ class MembersSeeder extends Seeder
                 'course_id' => null, 
                 'height' => null,
                 'tshirt_size' => null,
+                'gender' => 'M',
+                'batch_year' => null,
             ],
             
             // Demo Adviser User
@@ -43,6 +45,8 @@ class MembersSeeder extends Seeder
                 'course_id' => null, 
                 'height' => 165,
                 'tshirt_size' => 'M',
+                'gender' => 'F',
+                'batch_year' => null,
             ],
             
             // 10 Synthetic Members with varied profiles
@@ -58,6 +62,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 18, // Computer Science
                 'height' => 170,
                 'tshirt_size' => 'L',
+                'gender' => 'M',
+                'batch_year' => 2022,
             ],
             [
                 'org_id' => 1,
@@ -71,6 +77,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 18, // Computer Science
                 'height' => 160,
                 'tshirt_size' => 'M',
+                'gender' => 'F',
+                'batch_year' => 2023,
             ],
             [
                 'org_id' => 1,
@@ -84,6 +92,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 11, // Marketing Management
                 'height' => 175,
                 'tshirt_size' => 'XL',
+                'gender' => 'M',
+                'batch_year' => 2023,
             ],
             [
                 'org_id' => 1,
@@ -97,6 +107,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 6, // Psychology
                 'height' => 158,
                 'tshirt_size' => 'S',
+                'gender' => 'F',
+                'batch_year' => 2025, // new member (AY 2025-2026)
             ],
             [
                 'org_id' => 1,
@@ -110,6 +122,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 23, // Civil Engineering
                 'height' => 180,
                 'tshirt_size' => 'XL',
+                'gender' => 'M',
+                'batch_year' => 2021,
             ],
             [
                 'org_id' => 1,
@@ -123,6 +137,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 34, // Elementary Education
                 'height' => 162,
                 'tshirt_size' => 'M',
+                'gender' => 'F',
+                'batch_year' => 2022,
             ],
             [
                 'org_id' => 1,
@@ -136,6 +152,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 21, // Criminology
                 'height' => 172,
                 'tshirt_size' => 'L',
+                'gender' => 'M',
+                'batch_year' => 2023,
             ],
             [
                 'org_id' => 1,
@@ -149,6 +167,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 1, // Accountancy
                 'height' => 165,
                 'tshirt_size' => 'M',
+                'gender' => 'F',
+                'batch_year' => 2022,
             ],
             [
                 'org_id' => 1,
@@ -162,6 +182,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 19, // Game Development
                 'height' => 168,
                 'tshirt_size' => 'L',
+                'gender' => 'M',
+                'batch_year' => 2021,
             ],
             [
                 'org_id' => 1,
@@ -175,6 +197,8 @@ class MembersSeeder extends Seeder
                 'course_id' => 27, // Hospitality Management
                 'height' => 163,
                 'tshirt_size' => 'S',
+                'gender' => 'F',
+                'batch_year' => 2025,
             ],
         ];
 

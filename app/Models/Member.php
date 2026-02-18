@@ -195,25 +195,19 @@ class Member extends Authenticatable
         $eventDate = \Carbon\Carbon::parse($date);
         $dayOfWeek = $eventDate->format('l'); // Monday, Tuesday, etc.
 
-        // Check member_availability table
-        $availability = $this->availability()
+        // Only check the member's stated availability preference.
+        // Class conflicts are a warning (separate feature), NOT a disqualifier.
+        return $this->availability()
             ->where('day_of_week', $dayOfWeek)
             ->where('time_block', $timeBlock)
             ->where('is_available', true)
             ->exists();
-
-        if (!$availability) {
-            return false;
-        }
-
-        // Check for class conflicts
-        return !$this->hasClassConflictOn($eventDate, $timeBlock);
     }
 
     /**
      * Check if member has class conflict on given date/time
      */
-    protected function hasClassConflictOn(\Carbon\Carbon $eventDate, string $timeBlock): bool
+    public function hasClassConflictOn(\Carbon\Carbon $eventDate, string $timeBlock): bool
     {
         $dayOfWeek = $eventDate->format('l');
 
@@ -253,15 +247,38 @@ class Member extends Authenticatable
      * This is the main method called by AssignAI service
      * Returns array matching the ML model's expected features
      */
+    /**
+     * Current school year start (Aug-Jul cycle).
+     * Feb 2026 → 2025 (AY 2025-2026).
+     */
+    public static function currentSchoolYear(): int
+    {
+        $now = \Carbon\Carbon::now();
+        return $now->month >= 8 ? $now->year : $now->year - 1;
+    }
+
+    /**
+     * True when batch_year matches the current school year intake.
+     */
+    public function isNewMember(): bool
+    {
+        return $this->batch_year !== null
+            && (int) $this->batch_year === self::currentSchoolYear();
+    }
+
     public function toMLFeatures(string $eventDate, string $timeBlock): array
     {
+        $eventCarbon = \Carbon\Carbon::parse($eventDate);
         return [
-            'member_id' => (string) $this->id,
-            'is_available' => $this->isAvailableOn($eventDate, $timeBlock) ? 1 : 0,
-            'assignments_last_7_days' => $this->assignmentsInLastDays(7),
-            'assignments_last_30_days' => $this->assignmentsInLastDays(30),
+            'member_id'                  => (string) $this->id,
+            'is_available'               => $this->isAvailableOn($eventDate, $timeBlock) ? 1 : 0,
+            'has_class_conflict'         => $this->hasClassConflictOn($eventCarbon, $timeBlock) ? 1 : 0,
+            'gender'                     => $this->gender === 'M' ? 1 : 0,  // M=1, F=0
+            'is_new_member'              => $this->isNewMember() ? 1 : 0,
+            'assignments_last_7_days'    => $this->assignmentsInLastDays(7),
+            'assignments_last_30_days'   => $this->assignmentsInLastDays(30),
             'days_since_last_assignment' => $this->daysSinceLastAssignment(),
-            'attendance_rate' => $this->attendanceRate(),
+            'attendance_rate'            => $this->attendanceRate(),
         ];
     }
 }
