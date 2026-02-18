@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\TimeSlot;
 
 class TimeSlotsSeeder extends Seeder
 {
@@ -40,6 +40,16 @@ class TimeSlotsSeeder extends Seeder
             ['start_time' => '20:30:00', 'end_time' => '21:30:00', 'label' => '8:30 PM - 9:30 PM'],
         ];
 
-        DB::table('time_slots')->insert($timeSlots);
+        foreach ($timeSlots as $slot) {
+            TimeSlot::firstOrCreate(
+                [
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time']
+                ],
+                ['label' => $slot['label']]
+            );
+        }
+
+        $this->command->info('Time slots seeded successfully!');
     }
 }

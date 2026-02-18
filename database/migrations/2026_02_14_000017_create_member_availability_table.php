@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('member_id')->constrained('members')->onDelete('cascade');
             $table->foreignId('term_id')->constrained('terms')->onDelete('cascade');
-            $table->string('day_of_week', 10)->nullable(false);
-            $table->string('availability', 20)->nullable(false)->comment("'morning', 'afternoon', or 'both'");
+            $table->string('day_of_week', 10)->nullable(false); // Monday, Tuesday, etc.
+            $table->string('time_block', 20)->nullable(false); // Morning, Afternoon
+            $table->boolean('is_available')->default(true);
         });
     }
 

@@ -112,7 +112,7 @@ class AssignmentPredictor:
             results.append({
                 **member,
                 'assignment_probability': float(proba[i]),
-                'should_assign': proba[i] >= 0.5 and member.get('is_available', 0) == 1
+                'should_assign': bool(proba[i] >= 0.5 and member.get('is_available', 0) == 1)
             })
         
         # Sort by probability (highest first)
@@ -149,9 +149,9 @@ class AssignmentPredictor:
         return {
             'recommended': recommended,
             'all_candidates': all_candidates,
-            'event_size': event_size,
-            'coverage': len(recommended) >= event_size,
-            'shortfall': max(0, event_size - len(recommended))
+            'event_size': int(event_size),
+            'coverage': bool(len(recommended) >= event_size),
+            'shortfall': int(max(0, event_size - len(recommended)))
         }
     
     def _prepare_features(self, member: Dict, event_date: str, event_size: int) -> List:

@@ -30,9 +30,4 @@ class Term extends Model
     {
         return $this->hasMany(MemberAvailability::class);
     }
-
-    public function eventSchedules()
-    {
-        return $this->hasMany(EventSchedule::class);
-    }
 }

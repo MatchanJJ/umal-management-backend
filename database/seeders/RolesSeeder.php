@@ -3,8 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Models\Role;
 
 class RolesSeeder extends Seeder
 {
@@ -13,24 +12,12 @@ class RolesSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = [
-            [
-                'name' => 'admin',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'name' => 'adviser',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'name' => 'member',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-        ];
+        $roles = ['admin', 'adviser', 'member'];
 
-        DB::table('roles')->insert($roles);
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate(['name' => $roleName]);
+        }
+
+        $this->command->info('Roles seeded successfully!');
     }
 }
