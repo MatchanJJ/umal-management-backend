@@ -22,7 +22,7 @@ class AssignAIService
 
     public function __construct()
     {
-        $this->nlpServiceUrl = config('services.nlp.url', 'http://localhost:8000');
+        $this->nlpServiceUrl = config('services.nlp.url', 'http://localhost:8001');
         $this->timeout = config('services.nlp.timeout', 30);
     }
 
@@ -76,7 +76,8 @@ class AssignAIService
             return $this->successResponse(
                 $event,
                 $recommendations,
-                $parsed
+                $parsed,
+                $members
             );
 
         } catch (\Exception $e) {
@@ -330,16 +331,24 @@ class AssignAIService
     /**
      * Format success response
      */
-    protected function successResponse(Event $event, array $recommendations, array $parsed): array
+    protected function successResponse(Event $event, array $recommendations, array $parsed, $membersFeaturesCollection): array
     {
+        // Create lookup map: member_id => features
+        $featuresMap = $membersFeaturesCollection->keyBy('member_id');
+        
         $recommended = collect($recommendations['recommended'])
-            ->map(function ($rec) {
+            ->map(function ($rec) use ($featuresMap) {
                 $member = Member::find($rec['member_id']);
+                $features = $featuresMap->get($rec['member_id']);
+                
                 return [
                     'member' => $member,
                     'probability' => $rec['assignment_probability'],
+                    'fairness_adjusted_score' => $rec['fairness_adjusted_score'] ?? $rec['assignment_probability'],
+                    'fairness_bias' => $rec['fairness_bias'] ?? 'neutral',
                     'should_assign' => $rec['should_assign'],
-                    'explanation' => $this->generateExplanation($rec)
+                    'explanation' => $this->generateExplanation($rec),
+                    'features' => $features // Include ML features for SHAP endpoint
                 ];
             });
 
@@ -377,7 +386,8 @@ class AssignAIService
     {
         return [
             'success' => false,
-            'error' => $message
+            'message' => $message,
+            'error'   => $message,
         ];
     }
 

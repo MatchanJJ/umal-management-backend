@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AssignAIService;
+use App\Services\AssignAIChatService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -15,10 +16,12 @@ use Illuminate\Http\JsonResponse;
 class AssignAIController extends Controller
 {
     protected AssignAIService $assignAI;
+    protected AssignAIChatService $chatService;
 
-    public function __construct(AssignAIService $assignAI)
+    public function __construct(AssignAIService $assignAI, AssignAIChatService $chatService)
     {
-        $this->assignAI = $assignAI;
+        $this->assignAI    = $assignAI;
+        $this->chatService = $chatService;
     }
 
     /**
@@ -43,9 +46,13 @@ class AssignAIController extends Controller
             $validated['event_id'] ?? null
         );
 
-        $statusCode = $result['success'] ? 200 : 400;
+        // 200 for success or event-not-found (informational, frontend handles it);
+        // 422 for genuine processing failures.
+        if ($result['success'] || isset($result['event_exists'])) {
+            return response()->json($result, 200);
+        }
 
-        return response()->json($result, $statusCode);
+        return response()->json($result, 422);
     }
 
     /**
@@ -152,6 +159,34 @@ class AssignAIController extends Controller
     }
 
     /**
+     * Multi-turn assignment chat
+     *
+     * POST /api/assignai/chat
+     *
+     * Body: {
+     *   "event_id": 12,
+     *   "message": "females only, no class conflicts",
+     *   "conversation_history": [{"role":"user","content":"..."}, ...]
+     * }
+     */
+    public function chat(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'event_id'             => 'required|integer|exists:events,id',
+            'message'              => 'required|string|min:1',
+            'conversation_history' => 'nullable|array',
+        ]);
+
+        $event   = \App\Models\Event::findOrFail($validated['event_id']);
+        $history = $validated['conversation_history'] ?? [];
+
+        $result = $this->chatService->chat($event, $validated['message'], $history);
+
+        // Always return 200 — errors surface as chat bubbles on the frontend
+        return response()->json($result, 200);
+    }
+
+    /**
      * Check NLP service health
      * 
      * GET /api/assignai/health
@@ -187,5 +222,80 @@ class AssignAIController extends Controller
             'message' => 'Parse endpoint - feature coming soon',
             'prompt' => $validated['prompt']
         ]);
+    }
+
+    /**
+     * Get SHAP-based explanation for a member's assignment recommendation
+     * 
+     * POST /api/assignai/explain-shap
+     * 
+     * Body: {
+     *   "member_id": "123",
+     *   "is_available": 1,
+     *   "assignments_last_7_days": 0,
+     *   "assignments_last_30_days": 2,
+     *   "days_since_last_assignment": 15,
+     *   "attendance_rate": 0.95,
+     *   "event_date": "2026-02-21",
+     *   "event_size": 3
+     * }
+     */
+    public function explainShap(Request $request): JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'member_id' => 'required|string',
+            'is_available' => 'required|integer|in:0,1',
+            'has_class_conflict' => 'nullable|integer|in:0,1',
+            'assignments_last_7_days' => 'required|integer|min:0',
+            'assignments_last_30_days' => 'required|integer|min:0',
+            'days_since_last_assignment' => 'required|integer|min:0',
+            'attendance_rate' => 'required|numeric|min:0|max:1',
+            'event_date' => 'required|date',
+            'event_size' => 'required|integer|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            \Illuminate\Support\Facades\Log::error('explainShap validation failed', [
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->all(),
+            ]);
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $validated = $validator->validated();
+
+        // Normalize event_date to Y-m-d regardless of how the model serialized it
+        $eventDate = \Carbon\Carbon::parse($validated['event_date'])->toDateString();
+
+        try {
+            $nlpServiceUrl = config('services.nlp.url', 'http://localhost:8001');
+            
+            // NLP service expects member fields flat in body, event_date/event_size as query params
+            $response = \Illuminate\Support\Facades\Http::timeout(30)
+                ->post("{$nlpServiceUrl}/explain-shap?event_date={$eventDate}&event_size={$validated['event_size']}", [
+                    'member_id' => $validated['member_id'],
+                    'is_available' => $validated['is_available'],
+                    'has_class_conflict' => $validated['has_class_conflict'] ?? 0,
+                    'assignments_last_7_days' => $validated['assignments_last_7_days'],
+                    'assignments_last_30_days' => $validated['assignments_last_30_days'],
+                    'days_since_last_assignment' => $validated['days_since_last_assignment'],
+                    'attendance_rate' => $validated['attendance_rate'],
+                ]);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json([
+                'error' => 'SHAP explanation service unavailable',
+                'details' => $response->body()
+            ], 503);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch SHAP explanation',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

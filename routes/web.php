@@ -57,17 +57,14 @@ Route::middleware(['auth', 'whitelisted'])->group(function () {
         Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
         Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
         
-        // AssignAI - Intelligent volunteer assignment
-        Route::get('/assignai', function () {
-            return view('assignai.index');
-        })->name('assignai.index');
-        
         // AssignAI API Routes
         Route::prefix('api/assignai')->group(function () {
+            Route::post('/chat', [AssignAIController::class, 'chat'])->name('assignai.chat');
             Route::post('/suggest', [AssignAIController::class, 'suggest'])->name('assignai.suggest');
             Route::post('/finalize', [AssignAIController::class, 'finalize'])->name('assignai.finalize');
             Route::post('/regenerate', [AssignAIController::class, 'regenerate'])->name('assignai.regenerate');
             Route::post('/explain', [AssignAIController::class, 'explain'])->name('assignai.explain');
+            Route::post('/explain-shap', [AssignAIController::class, 'explainShap'])->name('assignai.explain-shap');
             Route::post('/parse', [AssignAIController::class, 'parseOnly'])->name('assignai.parse');
             Route::get('/health', [AssignAIController::class, 'health'])->name('assignai.health');
         });
@@ -81,6 +78,10 @@ Route::middleware(['auth', 'whitelisted'])->group(function () {
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('dashboard');
+        
+        Route::get('/fairness-report', function () {
+            return view('admin.fairness-report');
+        })->name('fairness-report');
         
         Route::get('/whitelist', [WhitelistController::class, 'index'])->name('whitelist.index');
         Route::get('/whitelist/pending', [WhitelistController::class, 'pending'])->name('whitelist.pending');
