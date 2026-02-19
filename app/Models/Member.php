@@ -25,7 +25,9 @@ class Member extends Authenticatable
         'college_id', 
         'course_id',
         'height', 
-        'tshirt_size'
+        'tshirt_size',
+        'gender',
+        'batch_year',
     ];
 
     protected $hidden = [

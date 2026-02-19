@@ -172,15 +172,19 @@ class AssignAIController extends Controller
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'event_id'             => 'required|integer|exists:events,id',
-            'message'              => 'required|string|min:1',
-            'conversation_history' => 'nullable|array',
+            'event_id'                    => 'required|integer|exists:events,id',
+            'message'                     => 'required|string|min:1',
+            'conversation_history'        => 'nullable|array',
+            'conversation_history.*.role' => 'sometimes|string|in:user,assistant',
+            'conversation_history.*.content' => 'sometimes|string',
+            'previous_merged_constraints' => 'nullable|array',
         ]);
 
-        $event   = \App\Models\Event::findOrFail($validated['event_id']);
-        $history = $validated['conversation_history'] ?? [];
+        $event          = \App\Models\Event::findOrFail($validated['event_id']);
+        $history        = $validated['conversation_history'] ?? [];
+        $prevMerged     = $validated['previous_merged_constraints'] ?? null;
 
-        $result = $this->chatService->chat($event, $validated['message'], $history);
+        $result = $this->chatService->chat($event, $validated['message'], $history, $prevMerged);
 
         // Always return 200 — errors surface as chat bubbles on the frontend
         return response()->json($result, 200);

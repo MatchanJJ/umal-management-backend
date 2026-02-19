@@ -33,8 +33,11 @@ class DatabaseSeeder extends Seeder
             
             // Step 5: Members (depends on organizations, roles, colleges & courses)
             MembersSeeder::class,
-            
-            // Step 6: Events (depends on members for created_by)
+
+            // Step 6: Member class schedules (depends on members, terms, templates, time_slots)
+            MemberSchedulesSeeder::class,
+
+            // Step 7: Events (depends on members for created_by)
             EventsSeeder::class,
         ]);
     }

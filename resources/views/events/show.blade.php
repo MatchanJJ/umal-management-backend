@@ -456,11 +456,8 @@
             loading: false,
             finalizing: false,
             mergedConstraints: {
-                gender_filter: null,
-                new_old_filter: null,
-                conflict_ok: null,
-                college_filter: null,
-                priority_rules: [],
+                groups: [],
+                global: { conflict_ok: null, priority_rules: [] },
             },
             selectedMembers: {},   // member_id â†’ boolean
 
@@ -492,6 +489,7 @@
                             event_id: this.eventId,
                             message: text,
                             conversation_history: this.history.slice(0, -1), // exclude current message
+                            previous_merged_constraints: this.mergedConstraints, // O(1) merge — NLP skips re-parsing history
                         }),
                     });
 

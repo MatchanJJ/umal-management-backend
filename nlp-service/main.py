@@ -33,6 +33,11 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
     conversation_history: List[ChatMessage] = Field(default_factory=list)
     event_context: ChatEventContext
+    previous_merged_constraints: Optional[Dict] = Field(
+        None,
+        description="Merged constraints from the previous turn. When provided, used as the "
+                    "base instead of re-parsing all history, making each turn O(1)."
+    )
 
 
 class ChatResponse(BaseModel):
@@ -134,15 +139,22 @@ async def chat(request: ChatRequest):
     try:
         parsed = semantic_parser.parse(request.message)
 
-        base: Dict = {
-            "groups": [],
-            "global": {"conflict_ok": None, "priority_rules": []},
-            "is_confirming": False,
-        }
-        for turn in request.conversation_history:
-            if turn.role == "user":
-                turn_parsed = semantic_parser.parse(turn.content)
-                base = semantic_parser.merge(base, turn_parsed)
+        if request.previous_merged_constraints is not None:
+            # O(1) path: frontend echoes back the last merged state; just merge
+            # the current turn on top of it — no need to re-parse history.
+            base = request.previous_merged_constraints
+        else:
+            # Fallback (first turn or legacy clients): re-parse all history user
+            # turns and accumulate into a fresh base.
+            base: Dict = {
+                "groups": [],
+                "global": {"conflict_ok": None, "priority_rules": []},
+                "is_confirming": False,
+            }
+            for turn in request.conversation_history:
+                if turn.role == "user":
+                    turn_parsed = semantic_parser.parse(turn.content)
+                    base = semantic_parser.merge(base, turn_parsed)
 
         merged = semantic_parser.merge(base, parsed)
         natural_reply = semantic_parser.generate_reply(merged)
