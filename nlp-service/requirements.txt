@@ -1,6 +1,8 @@
 fastapi
 uvicorn[standard]
 sentence-transformers
+transformers>=4.30.0
+torch
 pandas
 numpy
 scikit-learn

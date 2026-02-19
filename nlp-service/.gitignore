@@ -28,6 +28,13 @@ index/
 *.npy
 *.pkl
 
+# T5 fine-tuned model checkpoint (too large for GitHub, regenerate with fine_tune_semantic.py)
+semantic_model/
+semantic_tokenizer/
+
+# Generated training data (regenerate with generate_semantic_data.py)
+semantic_training_data.jsonl
+
 # IDE
 .vscode/
 .idea/
