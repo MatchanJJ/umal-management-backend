@@ -225,77 +225,59 @@ class AssignAIController extends Controller
     }
 
     /**
-     * Get SHAP-based explanation for a member's assignment recommendation
-     * 
+     * Get feature-importance explanation for a member's assignment recommendation.
+     *
      * POST /api/assignai/explain-shap
-     * 
-     * Body: {
-     *   "member_id": "123",
-     *   "is_available": 1,
-     *   "assignments_last_7_days": 0,
-     *   "assignments_last_30_days": 2,
-     *   "days_since_last_assignment": 15,
-     *   "attendance_rate": 0.95,
-     *   "event_date": "2026-02-21",
-     *   "event_size": 3
-     * }
+     *
+     * Body: { member_id, is_available, has_class_conflict, assignments_last_7_days,
+     *         assignments_last_30_days, days_since_last_assignment, attendance_rate,
+     *         event_date, event_size }
      */
     public function explainShap(Request $request): JsonResponse
     {
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'member_id' => 'required|string',
-            'is_available' => 'required|integer|in:0,1',
-            'has_class_conflict' => 'nullable|integer|in:0,1',
-            'assignments_last_7_days' => 'required|integer|min:0',
-            'assignments_last_30_days' => 'required|integer|min:0',
+        $validated = $request->validate([
+            'member_id'                  => 'required|string',
+            'is_available'               => 'required|integer|in:0,1',
+            'has_class_conflict'         => 'nullable|integer|in:0,1',
+            'assignments_last_7_days'    => 'required|integer|min:0',
+            'assignments_last_30_days'   => 'required|integer|min:0',
             'days_since_last_assignment' => 'required|integer|min:0',
-            'attendance_rate' => 'required|numeric|min:0|max:1',
-            'event_date' => 'required|date',
-            'event_size' => 'required|integer|min:1'
+            'attendance_rate'            => 'required|numeric|min:0|max:1',
+            'event_date'                 => 'required|date',
+            'event_size'                 => 'required|integer|min:1',
         ]);
 
-        if ($validator->fails()) {
-            \Illuminate\Support\Facades\Log::error('explainShap validation failed', [
-                'errors' => $validator->errors()->toArray(),
-                'input' => $request->all(),
-            ]);
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        $attendance = (float) $validated['attendance_rate'];
+        $daysSince  = (int)   $validated['days_since_last_assignment'];
+        $recent30   = (int)   $validated['assignments_last_30_days'];
+        $recent7    = (int)   $validated['assignments_last_7_days'];
+        $available  = (int)   $validated['is_available'];
+        $conflict   = (int)  ($validated['has_class_conflict'] ?? 0);
 
-        $validated = $validator->validated();
+        // Fairness score (same formula as AssignAIService::predictAssignments)
+        $score = ($attendance * 10) + ($daysSince / 30) - ($recent30 * 0.5);
+        $prob  = round(min(max($score / 12.0, 0.0), 1.0), 4);
 
-        // Normalize event_date to Y-m-d regardless of how the model serialized it
-        $eventDate = \Carbon\Carbon::parse($validated['event_date'])->toDateString();
+        $factors = [
+            ['feature' => 'attendance_rate',            'value' => $attendance, 'shap' =>  round($attendance * 2.0, 4),   'impact' => $attendance >= 0.7 ? 'positive' : 'negative'],
+            ['feature' => 'days_since_last_assignment', 'value' => $daysSince,  'shap' =>  round($daysSince  / 30, 4),    'impact' => $daysSince >= 14   ? 'positive' : 'neutral'],
+            ['feature' => 'assignments_last_30_days',   'value' => $recent30,   'shap' => -round($recent30   * 0.5, 4),   'impact' => $recent30 >= 3     ? 'negative' : 'neutral'],
+            ['feature' => 'assignments_last_7_days',    'value' => $recent7,    'shap' => -round($recent7    * 0.3, 4),   'impact' => $recent7 >= 2      ? 'negative' : 'neutral'],
+            ['feature' => 'is_available',               'value' => $available,  'shap' => $available ? 0.1 : -5.0,        'impact' => $available         ? 'positive' : 'negative'],
+            ['feature' => 'has_class_conflict',         'value' => $conflict,   'shap' => $conflict  ? -1.0 : 0.0,        'impact' => $conflict          ? 'negative' : 'neutral'],
+        ];
 
-        try {
-            $nlpServiceUrl = config('services.nlp.url', 'http://localhost:8001');
-            
-            // NLP service expects member fields flat in body, event_date/event_size as query params
-            $response = \Illuminate\Support\Facades\Http::timeout(30)
-                ->post("{$nlpServiceUrl}/explain-shap?event_date={$eventDate}&event_size={$validated['event_size']}", [
-                    'member_id' => $validated['member_id'],
-                    'is_available' => $validated['is_available'],
-                    'has_class_conflict' => $validated['has_class_conflict'] ?? 0,
-                    'assignments_last_7_days' => $validated['assignments_last_7_days'],
-                    'assignments_last_30_days' => $validated['assignments_last_30_days'],
-                    'days_since_last_assignment' => $validated['days_since_last_assignment'],
-                    'attendance_rate' => $validated['attendance_rate'],
-                ]);
+        usort($factors, fn($a, $b) => abs($b['shap']) <=> abs($a['shap']));
 
-            if ($response->successful()) {
-                return response()->json($response->json());
-            }
-
-            return response()->json([
-                'error' => 'SHAP explanation service unavailable',
-                'details' => $response->body()
-            ], 503);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch SHAP explanation',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'member_id'              => $validated['member_id'],
+            'assignment_probability' => $prob,
+            'fairness_score'         => round($score, 4),
+            'recommendation'         => $prob >= 0.5 ? 'Recommended' : 'Not recommended',
+            'top_positive_factors'   => array_values(array_filter($factors, fn($f) => $f['impact'] === 'positive')),
+            'top_negative_factors'   => array_values(array_filter($factors, fn($f) => $f['impact'] === 'negative')),
+            'all_factors'            => $factors,
+            'explanation_source'     => 'local-fairness-scorer',
+        ]);
     }
 }

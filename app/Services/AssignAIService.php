@@ -91,30 +91,40 @@ class AssignAIService
     }
 
     /**
-     * Parse natural language prompt using NLP service
+     * Parse natural language prompt locally (regex-based).
+     * Extracts slots_needed, day, and time_block without calling the NLP service.
      */
     protected function parsePrompt(string $prompt): ?array
     {
-        try {
-            $response = Http::timeout($this->timeout)
-                ->post("{$this->nlpServiceUrl}/parse-request", [
-                    'text' => $prompt
-                ]);
+        $prompt = strtolower($prompt);
 
-            if ($response->successful()) {
-                return $response->json();
+        // Extract number of slots
+        preg_match('/\b(\d+)\s*(?:volunteer|member|student|person|people|slot|s)?\b/i', $prompt, $numMatch);
+        $slotsNeeded = isset($numMatch[1]) ? (int) $numMatch[1] : 5;
+
+        // Extract day
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $day  = null;
+        foreach ($days as $d) {
+            if (str_contains($prompt, $d)) {
+                $day = ucfirst($d);
+                break;
             }
-
-            Log::error('NLP parsing failed', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('NLP service connection failed', ['error' => $e->getMessage()]);
-            return null;
         }
+
+        // Extract time block
+        $timeBlock = 'Morning';
+        if (str_contains($prompt, 'afternoon') || str_contains($prompt, 'pm')) {
+            $timeBlock = 'Afternoon';
+        }
+
+        return [
+            'day'          => $day,
+            'time_block'   => $timeBlock,
+            'slots_needed' => $slotsNeeded,
+            'confidence'   => 1.0,
+            'top_match'    => $prompt,
+        ];
     }
 
     /**
@@ -237,32 +247,45 @@ class AssignAIService
     }
 
     /**
-     * Get ML-based assignment predictions from NLP service
+     * Rank members locally using a fairness score derived from participation
+     * history and attendance. Replaces the old /predict-assignments NLP call.
+     *
+     * Returns a structure compatible with the existing successResponse() format:
+     * ['recommended' => [...], 'all_candidates' => [...], 'coverage' => bool, 'shortfall' => int]
      */
     protected function predictAssignments(array $members, string $eventDate, int $eventSize): ?array
     {
-        try {
-            $response = Http::timeout($this->timeout)
-                ->post("{$this->nlpServiceUrl}/predict-assignments", [
-                    'members' => $members,
-                    'event_date' => $eventDate,
-                    'event_size' => $eventSize
-                ]);
+        $scored = array_map(function (array $m) {
+            $attendance = (float) ($m['attendance_rate']            ?? 0.8);
+            $daysSince  = (int)   ($m['days_since_last_assignment'] ?? 30);
+            $recent30   = (int)   ($m['assignments_last_30_days']   ?? 0);
 
-            if ($response->successful()) {
-                return $response->json();
-            }
+            $score = ($attendance * 10)
+                   + ($daysSince  / 30)
+                   - ($recent30   * 0.5);
 
-            Log::error('Assignment prediction failed', [
-                'status' => $response->status(),
-                'body' => $response->body()
+            return array_merge($m, [
+                'assignment_probability'   => round(min(max($score / 12.0, 0.0), 1.0), 4),
+                'fairness_adjusted_score' => round($score, 4),
+                'fairness_bias'           => $score > 8 ? 'positive' : ($score < 4 ? 'negative' : 'neutral'),
+                'should_assign'           => ($m['is_available'] ?? 1) === 1,
             ]);
+        }, $members);
 
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Prediction service connection failed', ['error' => $e->getMessage()]);
-            return null;
-        }
+        usort($scored, fn($a, $b) =>
+            $b['fairness_adjusted_score'] <=> $a['fairness_adjusted_score']
+        );
+
+        $recommended = array_slice($scored, 0, $eventSize);
+        $shortfall   = max(0, $eventSize - count($recommended));
+
+        return [
+            'recommended'    => $recommended,
+            'all_candidates' => $scored,
+            'event_size'     => $eventSize,
+            'coverage'       => $shortfall === 0,
+            'shortfall'      => $shortfall,
+        ];
     }
 
     /**
