@@ -39,6 +39,16 @@
                         <a href="{{ route('events.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Events
                         </a>
+                        @if(auth()->user()->role && in_array(auth()->user()->role->name, ['admin', 'adviser']))
+                        @php
+                            $membersRoute = auth()->user()->role->name === 'admin'
+                                ? route('admin.members.index')
+                                : route('adviser.members.index');
+                        @endphp
+                        <a href="{{ $membersRoute }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Members
+                        </a>
+                        @endif
                     </div>
                 </div>
                 <div class="flex items-center">

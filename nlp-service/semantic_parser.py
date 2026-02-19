@@ -177,9 +177,18 @@ class SemanticParser:
     def merge(self, base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
         """
         Merge two parsed constraint dicts across turns.
-        - Groups: later message wins (replaces entirely) unless it has no groups
-        - global.conflict_ok: later non-None wins
-        - global.priority_rules: accumulated (unique)
+
+        Group merge strategy:
+        - MODIFIER turn  (no college in any override group, base is non-empty):
+            Apply gender / new_old / height fields to EVERY existing base group.
+            e.g. "all female pls" → patches each base group with gender=F.
+        - SPECIFICATION turn (any override group has a college, or base is empty):
+            Replace groups entirely with the override groups.
+            e.g. "2 from CCE and 1 from CASE" → new group list.
+
+        Global:
+        - conflict_ok: later non-None wins
+        - priority_rules / height_rule: accumulated (unique), later wins for height_rule
         - is_confirming: current turn only
         """
         merged: Dict[str, Any] = {
@@ -187,13 +196,38 @@ class SemanticParser:
             "global":        {
                 "conflict_ok":    base.get("global", {}).get("conflict_ok"),
                 "priority_rules": list(base.get("global", {}).get("priority_rules", [])),
+                "height_rule":    base.get("global", {}).get("height_rule"),
             },
             "is_confirming": False,
         }
 
-        # Override groups only if the new message has groups
-        if override.get("groups"):
-            merged["groups"] = override["groups"]
+        override_groups = override.get("groups", [])
+        if override_groups:
+            base_groups = merged["groups"]
+
+            # A "specification" override has at least one group with a college set.
+            # A "modifier" override only carries attribute patches (gender, new_old, height).
+            is_modifier = (
+                bool(base_groups)
+                and not any(g.get("college") for g in override_groups)
+            )
+
+            if is_modifier:
+                # Build a patch dict from all override groups' attribute-only fields.
+                # Never patch "count" from a modifier turn — the user didn't re-specify a
+                # number, so T5 just emits the default 1, which would overwrite the real count.
+                patch: Dict[str, Any] = {}
+                for og in override_groups:
+                    for key in ("gender", "new_old", "height_min", "height_max"):
+                        if og.get(key) is not None:
+                            patch[key] = og[key]
+
+                if patch:
+                    merged["groups"] = [dict(g, **patch) for g in base_groups]
+                # else: empty patch — leave base groups untouched
+            else:
+                # Full replacement — new college-scoped groups
+                merged["groups"] = override_groups
 
         og = override.get("global", {})
         if og.get("conflict_ok") is not None:
@@ -202,6 +236,9 @@ class SemanticParser:
         for rule in og.get("priority_rules", []):
             if rule not in merged["global"]["priority_rules"]:
                 merged["global"]["priority_rules"].append(rule)
+
+        if og.get("height_rule") in VALID_HEIGHT_RULES:
+            merged["global"]["height_rule"] = og["height_rule"]
 
         if override.get("is_confirming"):
             merged["is_confirming"] = True

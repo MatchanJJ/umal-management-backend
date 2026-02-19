@@ -5,6 +5,7 @@ use App\Http\Controllers\WhitelistController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AssignAIController;
+use App\Http\Controllers\MembersController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -90,6 +91,8 @@ Route::middleware(['auth', 'whitelisted'])->group(function () {
         Route::post('/whitelist/{id}/reject', [WhitelistController::class, 'reject'])->name('whitelist.reject');
         Route::delete('/whitelist/{id}', [WhitelistController::class, 'destroy'])->name('whitelist.destroy');
         Route::post('/whitelist/bulk-import', [WhitelistController::class, 'bulkImport'])->name('whitelist.bulk-import');
+
+        Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     });
 
     // Whitelist management - Adviser
@@ -105,6 +108,8 @@ Route::middleware(['auth', 'whitelisted'])->group(function () {
         Route::post('/whitelist/{id}/reject', [WhitelistController::class, 'reject'])->name('whitelist.reject');
         Route::delete('/whitelist/{id}', [WhitelistController::class, 'destroy'])->name('whitelist.destroy');
         Route::post('/whitelist/bulk-import', [WhitelistController::class, 'bulkImport'])->name('whitelist.bulk-import');
+
+        Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     });
 
     // Member dashboard

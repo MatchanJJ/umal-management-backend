@@ -40,7 +40,7 @@ class AssignAIChatService
      * @param  array   $conversationHistory  Array of {role, content} objects from previous turns.
      * @return array{reply:string, recommendations:array, merged_constraints:array, turn_index:int}
      */
-    public function chat(Event $event, string $message, array $conversationHistory): array
+    public function chat(Event $event, string $message, array $conversationHistory, ?array $previousMerged = null): array
     {
         $eventDate  = Carbon::parse($event->date)->toDateString();
         $timeBlock  = $event->time_block ?? 'Morning';
@@ -49,7 +49,7 @@ class AssignAIChatService
 
         try {
             // 1. Parse message + merge constraints with history via NLP /chat
-            $nlpResult = $this->callChat($message, $conversationHistory, $eventDate, $timeBlock, $eventSize);
+            $nlpResult = $this->callChat($message, $conversationHistory, $eventDate, $timeBlock, $eventSize, $previousMerged);
             if (!$nlpResult) {
                 return $this->fallbackReply($turnIndex, "I'm having trouble connecting to my language model right now. Please try again in a moment.");
             }
@@ -220,19 +220,25 @@ class AssignAIChatService
         array  $history,
         string $eventDate,
         string $timeBlock,
-        int    $eventSize
+        int    $eventSize,
+        ?array $previousMerged = null
     ): ?array {
         try {
+            $payload = [
+                'message'               => $message,
+                'conversation_history'  => $history,
+                'event_context'         => [
+                    'date'       => $eventDate,
+                    'time_block' => $timeBlock,
+                    'event_size' => $eventSize,
+                ],
+            ];
+            if ($previousMerged !== null) {
+                $payload['previous_merged_constraints'] = $previousMerged;
+            }
+
             $response = Http::timeout($this->timeout)
-                ->post("{$this->nlpUrl}/chat", [
-                    'message'               => $message,
-                    'conversation_history'  => $history,
-                    'event_context'         => [
-                        'date'       => $eventDate,
-                        'time_block' => $timeBlock,
-                        'event_size' => $eventSize,
-                    ],
-                ]);
+                ->post("{$this->nlpUrl}/chat", $payload);
 
             if ($response->successful()) {
                 return $response->json();
