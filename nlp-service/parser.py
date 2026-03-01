@@ -1,4 +1,5 @@
 """
+@dev Fallback modeule
 Parser Module
 Performs semantic similarity lookup and extracts structured fields from natural language.
 Includes ConstraintParser for multi-slot constraint extraction (gender, new/old, conflict, college, priority).
