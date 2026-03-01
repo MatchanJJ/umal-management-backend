@@ -55,8 +55,12 @@ VALID_SPLIT  = 0.1
 # Dataset
 # 
 
-class ConstraintDataset(Dataset):
-    PREFIX = "parse constraint: "
+class MultiTaskDataset(Dataset):
+    """
+    Multi-task dataset for T5 fine-tuning.
+    Handles: constraint parsing, reply generation, and Q&A.
+    Task prefixes are already in the training data.
+    """
 
     def __init__(self, records, tokenizer):
         self.records   = records
@@ -67,7 +71,7 @@ class ConstraintDataset(Dataset):
 
     def __getitem__(self, idx):
         rec   = self.records[idx]
-        in_text  = self.PREFIX + rec["text"]
+        in_text  = rec["text"]  # No prefix addition - already in data
         out_text = rec["label"]
 
         enc = self.tokenizer(
@@ -131,8 +135,18 @@ def train(epochs: int = 3, batch_size: int = 8, lr: float = 3e-4):
         tokenizer = T5TokenizerFast.from_pretrained(MODEL_NAME)
         model     = T5ForConditionalGeneration.from_pretrained(MODEL_NAME)
 
+    # Diagnose CUDA setup
+    print(f"  PyTorch version: {torch.__version__}")
+    print(f"  CUDA available: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"  CUDA device: {torch.cuda.get_device_name(0)}")
+        print(f"  CUDA version: {torch.version.cuda}")
+    else:
+        print("  ⚠️  CUDA not available! PyTorch was likely installed without CUDA support.")
+        print("     Run: pip install torch --index-url https://download.pytorch.org/whl/cu121")
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"  Device: {device}")
+    print(f"  Using device: {device}")
     model.to(device)
 
     # Load data
@@ -140,8 +154,8 @@ def train(epochs: int = 3, batch_size: int = 8, lr: float = 3e-4):
     train_recs, val_recs = load_data()
     print(f"   Train: {len(train_recs)} | Val: {len(val_recs)}")
 
-    train_ds = ConstraintDataset(train_recs, tokenizer)
-    val_ds   = ConstraintDataset(val_recs,   tokenizer)
+    train_ds = MultiTaskDataset(train_recs, tokenizer)
+    val_ds   = MultiTaskDataset(val_recs,   tokenizer)
 
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_dl   = DataLoader(val_ds,   batch_size=batch_size)
@@ -201,7 +215,7 @@ def train(epochs: int = 3, batch_size: int = 8, lr: float = 3e-4):
             # Sample exact match on a few examples
             for rec in random.sample(val_recs, min(20, len(val_recs))):
                 enc = tokenizer(
-                    ConstraintDataset.PREFIX + rec["text"],
+                    rec["text"],  # Prefix already in training data
                     return_tensors="pt", max_length=MAX_IN_LEN, truncation=True
                 ).to(device)
                 gen = model.generate(**enc, max_new_tokens=MAX_OUT_LEN)

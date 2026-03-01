@@ -304,14 +304,130 @@ class SemanticParser:
 
         return f"Understood — I'll look for {'; '.join(parts)}. Fetching recommendations now…"
 
+    def generate_reply_from_json(self, constraints: Dict[str, Any]) -> str:
+        """
+        Use T5 to dynamically convert JSON constraints to natural language.
+        Falls back to template-based generation if model not ready.
+        """
+        if not self._ready:
+            return self.generate_reply(constraints)  # Fallback to templates
+        
+        try:
+            # Clean constraints to match training data format:
+            # 1. Remove is_confirming (not in Task B training)
+            # 2. Remove null/empty global fields (height_rule, empty lists, etc.)
+            clean_constraints = {}
+            
+            # Copy groups as-is
+            if 'groups' in constraints:
+                clean_constraints['groups'] = constraints['groups']
+            
+            # Clean global object - only include non-null, non-empty values
+            if 'global' in constraints:
+                clean_global = {}
+                for key, value in constraints['global'].items():
+                    # Include if: not None, not empty list, not 'height_rule' (not in training)
+                    if value is not None and not (isinstance(value, list) and len(value) == 0) and key != 'height_rule':
+                        clean_global[key] = value
+                        
+                # Only include global if it has content
+                if clean_global:
+                    clean_constraints['global'] = clean_global
+                    
+            json_str = json.dumps(clean_constraints, ensure_ascii=False)
+            prompt = f"generate reply: {json_str}"
+            # Use deterministic decoding (temp=0) to prevent hallucination
+            response = self._generate_text(prompt, max_tokens=128, temperature=0.0)
+            # Basic sanity check - if response is too short or looks like JSON, fall back
+            if len(response) < 10 or response.strip().startswith('{'):
+                return self.generate_reply(constraints)
+            return response
+        except Exception as e:
+            print(f"[SemanticParser] Reply generation failed ({e}), using template")
+            return self.generate_reply(constraints)
+
+    def answer_question(self, question: str, context: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Use T5 to answer general organization questions.
+        Returns dict with 'type' and 'content' keys.
+        
+        Response types:
+        - 'answer': Direct text answer
+        - 'query': Needs data from Laravel (e.g., [QUERY:members:college=CCE])
+        - 'error': Failed to generate response
+        """
+        if not self._ready:
+            return {
+                "type": "error",
+                "content": "Q&A capability requires the fine-tuned model. Please run training."
+            }
+        
+        try:
+            prompt = f"answer question: {question}"
+            # Lower temperature for more consistent Q&A responses
+            response = self._generate_text(prompt, max_tokens=150, temperature=0.3)
+            
+            # Check if model is requesting data
+            if response.startswith("[QUERY:"):
+                return {
+                    "type": "query",
+                    "content": response
+                }
+            
+            # Check if model indicates it's a constraint (might be misrouted)
+            if response.startswith("[INTENT:constraint]"):
+                return {
+                    "type": "redirect",
+                    "content": "constraint_parsing"
+                }
+            
+            return {
+                "type": "answer",
+                "content": response
+            }
+        except Exception as e:
+            print(f"[SemanticParser] Q&A failed ({e})")
+            return {
+                "type": "error",
+                "content": f"I encountered an error processing your question: {str(e)}"
+            }
+
+    def _generate_text(self, prompt: str, max_tokens: int = 128, temperature: float = 0.7) -> str:
+        """
+        Generic T5 text generation for multi-task inference.
+        Used by both reply generation and Q&A methods.
+        """
+        import torch
+        
+        enc = self._tokenizer(
+            prompt,
+            return_tensors="pt",
+            max_length=MAX_IN_LEN,
+            truncation=True,
+        ).to(self._device)
+        
+        with torch.no_grad():
+            out = self._model.generate(
+                **enc,
+                max_new_tokens=max_tokens,
+                num_beams=1,  # Pure greedy decoding (was 3)
+                temperature=temperature,
+                do_sample=temperature > 0,
+                early_stopping=True,
+            )
+        
+        return self._tokenizer.decode(out[0], skip_special_tokens=True).strip()
+
     # ─────────────────────────────────────────────────────────────────────────
     # Internal
     # ─────────────────────────────────────────────────────────────────────────
 
     def _parse_t5(self, text: str) -> Dict[str, Any]:
         import torch
+        # Add task-specific prefix for multi-task T5
+        prompt = f"parse constraint: {text}"
         enc = self._tokenizer(
-            PREFIX + text,
+            prompt,
             return_tensors="pt",
             max_length=MAX_IN_LEN,
             truncation=True,

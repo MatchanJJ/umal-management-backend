@@ -356,8 +356,8 @@
                                             </div>
                                             <div class="text-right flex-shrink-0">
                                                 <div class="text-xs font-bold"
-                                                     :class="(rec.fairness_adjusted_score || 0) >= 0.7 ? 'text-green-600' : (rec.fairness_adjusted_score || 0) >= 0.4 ? 'text-amber-600' : 'text-gray-500'"
-                                                     x-text="Math.round((rec.fairness_adjusted_score || 0) * 100) + '%'">
+                                                     :class="(rec.assignment_probability || 0) >= 0.7 ? 'text-green-600' : (rec.assignment_probability || 0) >= 0.4 ? 'text-amber-600' : 'text-gray-500'"
+                                                     x-text="Math.round((rec.assignment_probability || 0) * 100) + '%'">
                                                 </div>
                                                 <div class="text-xs text-gray-400">score</div>
                                             </div>
@@ -386,7 +386,7 @@
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                             </svg>
                                         </template>
-                                        <span x-text="finalizing ? 'Assigningâ€¦' : 'Assign ' + selectedCount() + ' selected'"></span>
+                                        <span x-text="finalizing ? 'Assigningâ€¦' : 'Assign ' + selectedCountForMessage(msg.recommendations) + ' selected'"></span>
                                     </button>
                                 </div>
                             </div>
@@ -555,6 +555,11 @@
 
             selectedCount() {
                 return Object.values(this.selectedMembers).filter(Boolean).length;
+            },
+
+            selectedCountForMessage(recommendations) {
+                if (!recommendations || !Array.isArray(recommendations)) return 0;
+                return recommendations.filter(r => this.selectedMembers[r.member_id] !== false).length;
             },
 
             async finalizeFromMessage(recommendations) {

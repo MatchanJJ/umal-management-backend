@@ -19,9 +19,9 @@ class HealthResponse(BaseModel):
 
 
 class ChatEventContext(BaseModel):
-    date: str = Field(..., description="Event date (YYYY-MM-DD)")
+    date: Optional[str] = Field(None, description="Event date (YYYY-MM-DD)")
     time_block: Optional[str] = Field(None, description="Morning or Afternoon")
-    event_size: int = Field(1, ge=1)
+    event_size: Optional[int] = Field(1, ge=1)
 
 
 class ChatMessage(BaseModel):
@@ -31,13 +31,9 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
-    conversation_history: List[ChatMessage] = Field(default_factory=list)
-    event_context: ChatEventContext
-    previous_merged_constraints: Optional[Dict] = Field(
-        None,
-        description="Merged constraints from the previous turn. When provided, used as the "
-                    "base instead of re-parsing all history, making each turn O(1)."
-    )
+    conversation_history: Optional[List[ChatMessage]] = None
+    event_context: Optional[ChatEventContext] = None
+    previous_merged_constraints: Optional[Dict] = None
 
 
 class ChatResponse(BaseModel):
@@ -45,6 +41,7 @@ class ChatResponse(BaseModel):
     merged_constraints: Dict
     natural_reply: str
     is_confirming: bool = False
+    response_type: str = "constraint"  # "constraint" or "answer"
 
 
 # ─── App Setup ───────────────────────────────────────────────────────────────
@@ -66,6 +63,48 @@ app.add_middleware(
 )
 
 semantic_parser: Optional[SemanticParser] = None
+
+
+# ─── Helper Functions ────────────────────────────────────────────────────────
+
+def classify_intent(message: str) -> str:
+    """
+    Lightweight heuristic to determine if a message is a constraint query or general question.
+    Returns: 'constraint' or 'question'
+    """
+    msg_lower = message.lower()
+    
+    # Strong constraint indicators
+    constraint_keywords = [
+        'cce', 'cte', 'cee', 'cae', 'ccje', 'cbae', 'che', 'chse', 'case', 'cafe',  # colleges
+        'from', 'male', 'female', 'freshie', 'veteran', 'new member', 'old member',
+        'prioritize', 'priority', 'no class conflict', 'conflict', 'attendance first',
+        'get me', 'i need', 'i want', 'assign', 'kumuha', 'kailangan'
+    ]
+    
+    # Check for numbers (often indicates "X volunteers from...")
+    has_number = any(c.isdigit() for c in message)
+    
+    # Check for constraint keywords
+    has_constraint_keyword = any(keyword in msg_lower for keyword in constraint_keywords)
+    
+    # Strong question indicators
+    question_indicators = [
+        'what', 'how', 'who', 'when', 'where', 'why', 'which',
+        'show me', 'list', 'tell me', 'explain', 'help',
+        'what is', 'how many', 'who are'
+    ]
+    
+    has_question_word = any(indicator in msg_lower for indicator in question_indicators)
+    
+    # Decision logic
+    if has_constraint_keyword or has_number:
+        return 'constraint'
+    elif has_question_word:
+        return 'question'
+    else:
+        # Default to constraint for ambiguous cases (original behavior)
+        return 'constraint'
 
 
 # ─── Startup ─────────────────────────────────────────────────────────────────
@@ -123,50 +162,105 @@ async def health_check():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Multi-turn constraint chat for AssignAI.
+    Multi-turn chat for AssignAI with multi-task support.
 
-    Parses natural language into a multi-group constraint object and merges
-    it with the conversation history.
-
-    Supported constraints:
-    - "2 females from CCE and 1 veteran male from CEE"
-    - "3 freshie CCE members, no class conflicts"
-    - "prioritize attendance"
+    Handles both:
+    1. Constraint parsing: "2 females from CCE and 1 veteran male from CEE"
+    2. General Q&A: "What is UMAL?", "Show me CCE members"
+    
+    The system automatically routes between constraint parsing and conversational Q&A.
     """
     if semantic_parser is None:
         raise HTTPException(status_code=503, detail="Semantic parser not initialized")
 
     try:
-        parsed = semantic_parser.parse(request.message)
+        # Classify intent
+        intent = classify_intent(request.message)
+        
+        if intent == 'constraint':
+            # ─── Constraint Parsing Path ───
+            parsed = semantic_parser.parse(request.message)
 
-        if request.previous_merged_constraints is not None:
-            # O(1) path: frontend echoes back the last merged state; just merge
-            # the current turn on top of it — no need to re-parse history.
-            base = request.previous_merged_constraints
+            if request.previous_merged_constraints is not None:
+                # O(1) path: frontend echoes back the last merged state
+                base = request.previous_merged_constraints
+            else:
+                # Fallback: re-parse all history
+                base: Dict = {
+                    "groups": [],
+                    "global": {"conflict_ok": None, "priority_rules": []},
+                    "is_confirming": False,
+                }
+                history = request.conversation_history or []
+                for turn in history:
+                    if turn.role == "user":
+                        turn_parsed = semantic_parser.parse(turn.content)
+                        base = semantic_parser.merge(base, turn_parsed)
+
+            merged = semantic_parser.merge(base, parsed)
+            
+            # Use T5 for dynamic reply generation if model is ready
+            if semantic_parser.is_fine_tuned:
+                natural_reply = semantic_parser.generate_reply_from_json(merged)
+            else:
+                natural_reply = semantic_parser.generate_reply(merged)
+
+            return ChatResponse(
+                parsed_constraints=parsed,
+                merged_constraints=merged,
+                natural_reply=natural_reply,
+                is_confirming=bool(parsed.get("is_confirming", False)),
+                response_type="constraint",
+            )
+        
         else:
-            # Fallback (first turn or legacy clients): re-parse all history user
-            # turns and accumulate into a fresh base.
-            base: Dict = {
-                "groups": [],
-                "global": {"conflict_ok": None, "priority_rules": []},
-                "is_confirming": False,
-            }
-            for turn in request.conversation_history:
-                if turn.role == "user":
-                    turn_parsed = semantic_parser.parse(turn.content)
-                    base = semantic_parser.merge(base, turn_parsed)
-
-        merged = semantic_parser.merge(base, parsed)
-        natural_reply = semantic_parser.generate_reply(merged)
-
-        return ChatResponse(
-            parsed_constraints=parsed,
-            merged_constraints=merged,
-            natural_reply=natural_reply,
-            is_confirming=bool(parsed.get("is_confirming", False)),
-        )
+            # ─── General Q&A Path ───
+            qa_response = semantic_parser.answer_question(request.message)
+            
+            if qa_response["type"] == "query":
+                # Return the raw query directive for Laravel to parse
+                return ChatResponse(
+                    parsed_constraints={},
+                    merged_constraints={},
+                    natural_reply=qa_response['content'],  # Pass through unchanged
+                    is_confirming=False,
+                    response_type="query",  # Needs data from Laravel
+                )
+            elif qa_response["type"] == "redirect":
+                # Model detected this should be handled as constraint
+                # Recursively call with constraint handling
+                parsed = semantic_parser.parse(request.message)
+                merged = parsed  # First turn, no merge needed
+                natural_reply = semantic_parser.generate_reply_from_json(merged) if semantic_parser.is_fine_tuned else semantic_parser.generate_reply(merged)
+                
+                return ChatResponse(
+                    parsed_constraints=parsed,
+                    merged_constraints=merged,
+                    natural_reply=natural_reply,
+                    is_confirming=False,
+                    response_type="constraint",
+                )
+            elif qa_response["type"] == "error":
+                # Error in Q&A generation
+                return ChatResponse(
+                    parsed_constraints={},
+                    merged_constraints={},
+                    natural_reply=qa_response["content"],
+                    is_confirming=False,
+                    response_type="answer",  # Just an answer, no recommendations
+                )
+            else:
+                # Normal answer
+                return ChatResponse(
+                    parsed_constraints={},
+                    merged_constraints={},
+                    natural_reply=qa_response["content"],
+                    is_confirming=False,
+                    response_type="answer",  # Just an answer, no recommendations
+                )
+                
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Chat parsing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
 
 
 if __name__ == "__main__":

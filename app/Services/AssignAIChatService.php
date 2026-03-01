@@ -57,6 +57,18 @@ class AssignAIChatService
             $mergedConstraints = $nlpResult['merged_constraints'] ?? [];
             $naturalReply      = $nlpResult['natural_reply'] ?? "Got it! Fetching recommendations…";
             $isConfirming      = (bool) ($nlpResult['is_confirming'] ?? false);
+            $responseType      = $nlpResult['response_type'] ?? 'constraint';
+
+            // Check if this is a Q&A response (not a constraint)
+            if ($responseType === 'answer' || $responseType === 'query') {
+                return [
+                    'reply'              => $naturalReply,
+                    'recommendations'    => [],
+                    'merged_constraints' => $mergedConstraints,
+                    'turn_index'         => $turnIndex,
+                    'is_confirming'      => false,
+                ];
+            }
 
             // Short-circuit: user is confirming — let frontend auto-assign last recs
             if ($isConfirming) {
@@ -233,7 +245,8 @@ class AssignAIChatService
                     'event_size' => $eventSize,
                 ],
             ];
-            if ($previousMerged !== null) {
+            // Only include previous_merged_constraints if it's not empty
+            if ($previousMerged !== null && !empty($previousMerged)) {
                 $payload['previous_merged_constraints'] = $previousMerged;
             }
 
