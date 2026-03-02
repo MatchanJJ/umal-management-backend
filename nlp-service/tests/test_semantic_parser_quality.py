@@ -517,3 +517,416 @@ class TestQualityBenchmark:
             json.dump(metrics, f, indent=2)
         
         logger.info(f"\nQuality metrics saved to: {metrics_file}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# T5 SEMANTIC HALLUCINATION AUDIT
+# ─────────────────────────────────────────────────────────────────────────────
+# These tests go beyond schema validation. They check whether T5 is inventing
+# constraints the user never expressed — the real definition of hallucination
+# for a semantic parser. Tests are intentionally NOT expected to all pass;
+# failures reveal where T5 needs more training data.
+#
+# Categories:
+#   A. Count hallucination   — user mentions no number,  T5 should NOT emit count
+#   B. College hallucination — user mentions no college, T5 should NOT emit college
+#   C. Gender hallucination  — user mentions no gender,  T5 should NOT emit gender
+#   D. Wrong college         — user says CCE, T5 returns CAE or other
+#   E. Wrong gender          — user says female, T5 returns M
+#   F. Multi-group collapse  — user says two groups, T5 collapses to one
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestT5SemanticHallucination:
+    """
+    Semantic hallucination audit for the fine-tuned T5-small model.
+
+    A schema-valid output can still be semantically hallucinated — e.g. T5
+    invents count=1 when the user said no number, or returns college=CCE when
+    the user never mentioned a college. Each test targets one specific failure
+    mode. PASSED = T5 is not hallucinating that field. FAILED = clear evidence
+    of hallucination in that category.
+    """
+
+    # ── A. Count Hallucination ────────────────────────────────────────────────
+
+    def test_no_count_hallucinated_college_only(self, semantic_parser):
+        """'I need volunteer from CCE' — user gave no count, T5 must not emit count."""
+        result = semantic_parser.parse("I need volunteer from CCE")
+        for g in result.get("groups", []):
+            assert "count" not in g or g["count"] is None, (
+                f"COUNT HALLUCINATION: T5 invented count={g.get('count')} "
+                f"when user said no number. group={g}"
+            )
+
+    def test_no_count_hallucinated_gender_only(self, semantic_parser):
+        """'Female volunteers please' — no count expressed."""
+        result = semantic_parser.parse("Female volunteers please")
+        for g in result.get("groups", []):
+            assert "count" not in g or g["count"] is None, (
+                f"COUNT HALLUCINATION: T5 invented count={g.get('count')} "
+                f"when user said no number. group={g}"
+            )
+
+    def test_no_count_hallucinated_experience_only(self, semantic_parser):
+        """'Experienced members only' — no count expressed."""
+        result = semantic_parser.parse("Experienced members only")
+        for g in result.get("groups", []):
+            assert "count" not in g or g["count"] is None, (
+                f"COUNT HALLUCINATION: T5 invented count={g.get('count')} "
+                f"when user said no number. group={g}"
+            )
+
+    def test_no_count_hallucinated_college_and_gender(self, semantic_parser):
+        """'Males from CEE' — college + gender expressed but NO count."""
+        result = semantic_parser.parse("Males from CEE")
+        for g in result.get("groups", []):
+            assert "count" not in g or g["count"] is None, (
+                f"COUNT HALLUCINATION: T5 invented count={g.get('count')} "
+                f"when user said no number. group={g}"
+            )
+
+    # ── B. College Hallucination ──────────────────────────────────────────────
+
+    def test_no_college_invented_count_only(self, semantic_parser):
+        """'I need 3 volunteers' — no college mentioned, T5 must not invent one."""
+        result = semantic_parser.parse("I need 3 volunteers")
+        for g in result.get("groups", []):
+            assert "college" not in g or g["college"] is None, (
+                f"COLLEGE HALLUCINATION: T5 invented college={g.get('college')} "
+                f"when user never mentioned a college. group={g}"
+            )
+
+    def test_no_college_invented_gender_and_count(self, semantic_parser):
+        """'2 females please' — gender + count only, no college."""
+        result = semantic_parser.parse("2 females please")
+        for g in result.get("groups", []):
+            assert "college" not in g or g["college"] is None, (
+                f"COLLEGE HALLUCINATION: T5 invented college={g.get('college')} "
+                f"when user never mentioned a college. group={g}"
+            )
+
+    def test_no_college_invented_experience_and_count(self, semantic_parser):
+        """'4 new members' — experience + count only, no college."""
+        result = semantic_parser.parse("4 new members")
+        for g in result.get("groups", []):
+            assert "college" not in g or g["college"] is None, (
+                f"COLLEGE HALLUCINATION: T5 invented college={g.get('college')} "
+                f"when user never mentioned a college. group={g}"
+            )
+
+    # ── C. Gender Hallucination ───────────────────────────────────────────────
+
+    def test_no_gender_invented_count_and_college(self, semantic_parser):
+        """'3 from CCE' — count + college only, no gender mentioned."""
+        result = semantic_parser.parse("3 from CCE")
+        for g in result.get("groups", []):
+            assert "gender" not in g or g["gender"] is None, (
+                f"GENDER HALLUCINATION: T5 invented gender={g.get('gender')} "
+                f"when user said no gender. group={g}"
+            )
+
+    def test_no_gender_invented_count_only(self, semantic_parser):
+        """'5 volunteers' — count only, no gender signal at all."""
+        result = semantic_parser.parse("5 volunteers")
+        for g in result.get("groups", []):
+            assert "gender" not in g or g["gender"] is None, (
+                f"GENDER HALLUCINATION: T5 invented gender={g.get('gender')} "
+                f"when user said no gender. group={g}"
+            )
+
+    # ── D. Wrong College ──────────────────────────────────────────────────────
+
+    def test_cce_not_confused_with_other(self, semantic_parser):
+        """'2 from CCE' — T5 must return CCE exactly, not CAE or anything else."""
+        result = semantic_parser.parse("2 from CCE")
+        colleges = [g.get("college") for g in result.get("groups", []) if g.get("college")]
+        assert len(colleges) > 0, "T5 failed to extract any college from '2 from CCE'"
+        assert all(c == "CCE" for c in colleges), (
+            f"WRONG COLLEGE: T5 returned {colleges} instead of CCE"
+        )
+
+    def test_cee_not_confused_with_cce(self, semantic_parser):
+        """'1 volunteer from CEE' — must return CEE not CCE."""
+        result = semantic_parser.parse("1 volunteer from CEE")
+        colleges = [g.get("college") for g in result.get("groups", []) if g.get("college")]
+        assert len(colleges) > 0, "T5 failed to extract any college from '1 volunteer from CEE'"
+        assert all(c == "CEE" for c in colleges), (
+            f"WRONG COLLEGE: T5 returned {colleges} instead of CEE"
+        )
+
+    def test_cafe_identified_correctly(self, semantic_parser):
+        """'2 from CAFE' — must return CAFE."""
+        result = semantic_parser.parse("2 from CAFE")
+        colleges = [g.get("college") for g in result.get("groups", []) if g.get("college")]
+        assert len(colleges) > 0, "T5 failed to extract any college from '2 from CAFE'"
+        assert all(c == "CAFE" for c in colleges), (
+            f"WRONG COLLEGE: T5 returned {colleges} instead of CAFE"
+        )
+
+    def test_cae_not_confused_with_cce(self, semantic_parser):
+        """'3 from CAE' — must return CAE not CCE."""
+        result = semantic_parser.parse("3 from CAE")
+        colleges = [g.get("college") for g in result.get("groups", []) if g.get("college")]
+        assert len(colleges) > 0, "T5 failed to extract any college from '3 from CAE'"
+        assert all(c == "CAE" for c in colleges), (
+            f"WRONG COLLEGE: T5 returned {colleges} instead of CAE"
+        )
+
+    # ── E. Wrong Gender ───────────────────────────────────────────────────────
+
+    def test_female_not_returned_as_male(self, semantic_parser):
+        """'2 female volunteers' — T5 must return F not M."""
+        result = semantic_parser.parse("2 female volunteers")
+        genders = [g.get("gender") for g in result.get("groups", []) if g.get("gender")]
+        assert len(genders) > 0, "T5 failed to extract any gender from '2 female volunteers'"
+        assert all(g == "F" for g in genders), (
+            f"WRONG GENDER: T5 returned {genders} instead of F"
+        )
+
+    def test_male_not_returned_as_female(self, semantic_parser):
+        """'3 male members' — T5 must return M not F."""
+        result = semantic_parser.parse("3 male members")
+        genders = [g.get("gender") for g in result.get("groups", []) if g.get("gender")]
+        assert len(genders) > 0, "T5 failed to extract any gender from '3 male members'"
+        assert all(g == "M" for g in genders), (
+            f"WRONG GENDER: T5 returned {genders} instead of M"
+        )
+
+    def test_babae_returns_female(self, semantic_parser):
+        """Tagalog 'dalawang babae' — must return gender=F."""
+        result = semantic_parser.parse("dalawang babae")
+        genders = [g.get("gender") for g in result.get("groups", []) if g.get("gender")]
+        assert len(genders) > 0, "T5 failed to extract gender from Tagalog 'dalawang babae'"
+        assert all(g == "F" for g in genders), (
+            f"WRONG GENDER (Tagalog): T5 returned {genders} instead of F"
+        )
+
+    def test_lalaki_returns_male(self, semantic_parser):
+        """Tagalog 'tatlong lalaki' — must return gender=M."""
+        result = semantic_parser.parse("tatlong lalaki")
+        genders = [g.get("gender") for g in result.get("groups", []) if g.get("gender")]
+        assert len(genders) > 0, "T5 failed to extract gender from Tagalog 'tatlong lalaki'"
+        assert all(g == "M" for g in genders), (
+            f"WRONG GENDER (Tagalog): T5 returned {genders} instead of M"
+        )
+
+    # ── F. Multi-Group Collapse ───────────────────────────────────────────────
+
+    def test_two_college_groups_not_collapsed(self, semantic_parser):
+        """'2 from CCE and 1 from CEE' — T5 must return 2 groups, not collapse to 1."""
+        result = semantic_parser.parse("2 from CCE and 1 from CEE")
+        groups = [g for g in result.get("groups", []) if g]
+        assert len(groups) >= 2, (
+            f"MULTI-GROUP COLLAPSE: T5 returned {len(groups)} group(s) "
+            f"instead of 2. groups={groups}"
+        )
+
+    def test_three_college_groups_not_collapsed(self, semantic_parser):
+        """'1 from CCE, 2 from CAE and 3 from CHE' — T5 must return 3 groups."""
+        result = semantic_parser.parse("1 from CCE, 2 from CAE and 3 from CHE")
+        groups = [g for g in result.get("groups", []) if g]
+        assert len(groups) >= 3, (
+            f"MULTI-GROUP COLLAPSE: T5 returned {len(groups)} group(s) "
+            f"instead of 3. groups={groups}"
+        )
+
+    def test_gender_split_not_collapsed(self, semantic_parser):
+        """'2 males and 3 females' — T5 must return 2 groups with distinct genders."""
+        result = semantic_parser.parse("2 males and 3 females")
+        groups = [g for g in result.get("groups", []) if g]
+        assert len(groups) >= 2, (
+            f"MULTI-GROUP COLLAPSE: T5 returned {len(groups)} group(s) instead of 2"
+        )
+        genders = {g.get("gender") for g in groups}
+        assert "M" in genders and "F" in genders, (
+            f"GENDER COLLAPSE: T5 merged both groups into same gender. groups={groups}"
+        )
+
+    def test_mixed_gender_college_split_not_collapsed(self, semantic_parser):
+        """'2 females from CCE and 3 males from CEE' — 2 distinct groups required."""
+        result = semantic_parser.parse("2 females from CCE and 3 males from CEE")
+        groups = [g for g in result.get("groups", []) if g]
+        assert len(groups) >= 2, (
+            f"MULTI-GROUP COLLAPSE: T5 returned {len(groups)} group(s) instead of 2. "
+            f"groups={groups}"
+        )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# T5 MULTI-TURN HALLUCINATION AUDIT
+# ─────────────────────────────────────────────────────────────────────────────
+# Tests for hallucinations specifically in turn-2/turn-3 style inputs — the
+# short modifier phrases that appear mid-conversation. These are parsed by T5
+# in isolation (no conversation history passed to the parser). Failures map
+# directly to missing training examples for modifier-style inputs.
+#
+# Categories:
+#   G. Ghost new_old on count inputs  — "make it 3" should NOT get new_old
+#   H. Modifier miss (gender)         — "also males" must extract gender=M
+#   I. Modifier miss (experience)     — "experienced only" must extract new_old
+#   J. Confirmation safety            — confirm phrases must not emit groups
+#   K. Modifier count not invented    — "from CCE" in modifier context, count stays
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestT5MultiTurnHallucination:
+    """
+    Multi-turn hallucination audit — tests T5 behaviour on the short modifier
+    and confirmation phrases that appear in turn 2 and turn 3 of a conversation.
+
+    Two failure modes measured here:
+    - HALLUCINATION: T5 invents a field the user never expressed
+      (e.g. new_old='old' when user only said "make it 3")
+    - MISS: T5 returns empty groups when it should have extracted a field
+      (e.g. "also males" returning [] instead of {gender: M})
+
+    Both are training data gaps. Hallucinations need negative examples added.
+    Misses need positive modifier-only examples added.
+    """
+
+    # ── G. Ghost new_old on count-change inputs ───────────────────────────────
+    # Confirmed by probe: T5 maps "make it 3"/"i need 5" → new_old='old',
+    # and "add 2 more" → new_old='new'. Root cause: number words in training
+    # data are coupled with experience-level labels.
+
+    def test_no_new_old_on_make_it_count(self, semantic_parser):
+        """'make it 3' — count change only, T5 must NOT emit new_old."""
+        result = semantic_parser.parse("make it 3")
+        for g in result.get("groups", []):
+            assert "new_old" not in g or g["new_old"] is None, (
+                f"GHOST new_old HALLUCINATION: T5 emitted new_old={g.get('new_old')} "
+                f"on count-change input 'make it 3'. group={g}"
+            )
+
+    def test_no_new_old_on_i_need_count(self, semantic_parser):
+        """'i need 5' — count change only, T5 must NOT emit new_old."""
+        result = semantic_parser.parse("i need 5")
+        for g in result.get("groups", []):
+            assert "new_old" not in g or g["new_old"] is None, (
+                f"GHOST new_old HALLUCINATION: T5 emitted new_old={g.get('new_old')} "
+                f"on count-change input 'i need 5'. group={g}"
+            )
+
+    def test_no_new_old_on_add_more(self, semantic_parser):
+        """'add 2 more' — T5 must NOT conflate 'add' with new_old='new'."""
+        result = semantic_parser.parse("add 2 more")
+        for g in result.get("groups", []):
+            assert "new_old" not in g or g["new_old"] is None, (
+                f"GHOST new_old HALLUCINATION: T5 emitted new_old={g.get('new_old')} "
+                f"on 'add 2 more' — 'add' does not mean new member. group={g}"
+            )
+
+    def test_no_gender_on_count_change(self, semantic_parser):
+        """'change to 4' — count change only, T5 must NOT invent gender."""
+        result = semantic_parser.parse("change to 4")
+        for g in result.get("groups", []):
+            assert "gender" not in g or g["gender"] is None, (
+                f"GHOST GENDER HALLUCINATION: T5 invented gender={g.get('gender')} "
+                f"on pure count-change input. group={g}"
+            )
+
+    # ── H. Modifier miss — gender ─────────────────────────────────────────────
+    # Confirmed by probe: "also males" and "make it females" return empty [].
+    # T5 never learned to emit {gender: M/F} without an accompanying count.
+
+    def test_also_males_extracts_gender(self, semantic_parser):
+        """'also males' — modifier turn must extract gender=M (not return empty)."""
+        result = semantic_parser.parse("also males")
+        groups = result.get("groups", [])
+        genders = [g.get("gender") for g in groups if g.get("gender")]
+        assert len(genders) > 0 and all(g == "M" for g in genders), (
+            f"MODIFIER MISS: T5 returned groups={groups} for 'also males'. "
+            f"Expected at least one group with gender=M. "
+            f"(Training data gap: no modifier-only gender examples)"
+        )
+
+    def test_make_it_females_extracts_gender(self, semantic_parser):
+        """'make it females' — modifier turn must extract gender=F."""
+        result = semantic_parser.parse("make it females")
+        groups = result.get("groups", [])
+        genders = [g.get("gender") for g in groups if g.get("gender")]
+        assert len(genders) > 0 and all(g == "F" for g in genders), (
+            f"MODIFIER MISS: T5 returned groups={groups} for 'make it females'. "
+            f"Expected at least one group with gender=F. "
+            f"(Training data gap: no modifier-only gender examples)"
+        )
+
+    # ── I. Modifier miss — experience ─────────────────────────────────────────
+    # Confirmed by probe: "experienced only" and "new members please" return [].
+
+    def test_experienced_only_extracts_new_old(self, semantic_parser):
+        """'experienced only' — modifier turn must extract new_old='old'."""
+        result = semantic_parser.parse("experienced only")
+        groups = result.get("groups", [])
+        new_old_vals = [g.get("new_old") for g in groups if g.get("new_old")]
+        assert len(new_old_vals) > 0 and all(v == "old" for v in new_old_vals), (
+            f"MODIFIER MISS: T5 returned groups={groups} for 'experienced only'. "
+            f"Expected new_old='old'. "
+            f"(Training data gap: no modifier-only experience examples)"
+        )
+
+    def test_new_members_please_extracts_new_old(self, semantic_parser):
+        """'new members please' — modifier turn must extract new_old='new'."""
+        result = semantic_parser.parse("new members please")
+        groups = result.get("groups", [])
+        new_old_vals = [g.get("new_old") for g in groups if g.get("new_old")]
+        assert len(new_old_vals) > 0 and all(v == "new" for v in new_old_vals), (
+            f"MODIFIER MISS: T5 returned groups={groups} for 'new members please'. "
+            f"Expected new_old='new'. "
+            f"(Training data gap: no modifier-only experience examples)"
+        )
+
+    # ── J. Confirmation safety ────────────────────────────────────────────────
+    # Confirmed by probe: all four confirmation phrases correctly return
+    # is_confirming=True with no groups. These PASS — recorded as regression guards.
+
+    def test_ok_looks_good_is_confirming(self, semantic_parser):
+        """'ok looks good' — must set is_confirming=True and emit NO groups."""
+        result = semantic_parser.parse("ok looks good")
+        assert result.get("is_confirming") is True, (
+            f"CONFIRMATION MISS: is_confirming={result.get('is_confirming')} for 'ok looks good'"
+        )
+        assert result.get("groups", []) == [], (
+            f"CONFIRMATION HALLUCINATION: groups={result.get('groups')} should be empty"
+        )
+
+    def test_perfect_assign_them_is_confirming(self, semantic_parser):
+        """'perfect assign them' — must be confirming with no constraint groups."""
+        result = semantic_parser.parse("perfect assign them")
+        assert result.get("is_confirming") is True, (
+            f"CONFIRMATION MISS: is_confirming={result.get('is_confirming')}"
+        )
+        assert result.get("groups", []) == [], (
+            f"CONFIRMATION HALLUCINATION: groups={result.get('groups')} should be empty"
+        )
+
+    def test_yes_go_ahead_is_confirming(self, semantic_parser):
+        """'yes go ahead' — must be confirming with no constraint groups."""
+        result = semantic_parser.parse("yes go ahead")
+        assert result.get("is_confirming") is True, (
+            f"CONFIRMATION MISS: is_confirming={result.get('is_confirming')}"
+        )
+        assert result.get("groups", []) == [], (
+            f"CONFIRMATION HALLUCINATION: groups={result.get('groups')} should be empty"
+        )
+
+    # ── K. College-modifier count not invented ────────────────────────────────
+    # "from CCE please" returns {count:1, college:CCE} — count=1 is hallucinated.
+    # This is the same root cause as the single-turn test but in a modifier context.
+
+    def test_from_college_modifier_no_count(self, semantic_parser):
+        """'from CCE please' — college-only modifier, T5 must NOT invent count=1."""
+        result = semantic_parser.parse("from CCE please")
+        for g in result.get("groups", []):
+            assert "count" not in g or g["count"] is None, (
+                f"COUNT HALLUCINATION in modifier context: T5 invented count={g.get('count')} "
+                f"for 'from CCE please'. group={g}. "
+                f"(This is why the merge fix was needed — T5 always emits count=1 as default)"
+            )
+
+    def test_switch_to_college_modifier_no_count(self, semantic_parser):
+        """'switch to CEE' — college reassignment modifier, must NOT emit count."""
+        result = semantic_parser.parse("switch to CEE")
+        for g in result.get("groups", []):
+            assert "count" not in g or g["count"] is None, (
+                f"COUNT HALLUCINATION in modifier context: T5 invented count={g.get('count')} "
+                f"for 'switch to CEE'. group={g}"
+            )

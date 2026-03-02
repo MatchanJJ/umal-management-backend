@@ -681,8 +681,8 @@
     "category": "Multi-Turn Conversation",
     "type": "multi_turn",
     "test_id": "multiturn_003",
-    "description": "Specification replaces then modifier applies: count+gender -> college spec (replaces) -> experience modifier",
-    "note": "Specification turn (with college) fully resets the group list; subsequent modifiers patch the new groups",
+    "description": "College-add modifier: count+gender -> college patch (count preserved) -> experience modifier",
+    "note": "'From CCE' with no explicit count is treated as a college-add modifier — patches college onto base groups while preserving count and gender. A specification only triggers when override has college AND count > 1.",
     "conversation": [
       {
         "turn": 1,
@@ -695,18 +695,18 @@
       {
         "turn": 2,
         "input": "From CCE",
-        "description": "Specification: college present -> replaces entire group list, prior count+gender are gone",
-        "merge_action": "specification",
+        "description": "College-add modifier: has college but no explicit count (T5 defaults to 1) -> patches college onto base, count=2 and gender=F preserved",
+        "merge_action": "modifier",
         "expected_parse": {"groups": [{"college": "CCE"}], "global": {"conflict_ok": false}, "is_confirming": false},
-        "expected_merged": {"groups": [{"college": "CCE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+        "expected_merged": {"groups": [{"count": 2, "gender": "F", "college": "CCE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
       },
       {
         "turn": 3,
         "input": "New members please",
-        "description": "Modifier: patches new_old=new onto the CCE group (no college in override)",
+        "description": "Modifier: patches new_old=new, all prior fields preserved",
         "merge_action": "modifier",
         "expected_parse": {"groups": [{"new_old": "new"}], "global": {"conflict_ok": false}, "is_confirming": false},
-        "expected_merged": {"groups": [{"college": "CCE", "new_old": "new"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+        "expected_merged": {"groups": [{"count": 2, "gender": "F", "college": "CCE", "new_old": "new"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
       }
     ]
   },
