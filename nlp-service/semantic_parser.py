@@ -205,20 +205,44 @@ class SemanticParser:
         if override_groups:
             base_groups = merged["groups"]
 
-            # A "specification" override has at least one group with a college set.
-            # A "modifier" override only carries attribute patches (gender, new_old, height).
+            # A "specification" override replaces the group list entirely.
+            # A "modifier" override patches attribute fields onto the existing base groups.
+            #
+            # Key insight: T5 always emits count=1 as a default when the user says something
+            # like "from CCE" with no count. We must not treat that as a full specification
+            # (which would drop the user's real count from a prior turn). A real specification
+            # that re-defines count will have count > 1 from the T5 output.
+            #
+            # Modifier conditions (any of):
+            #   1. No college in any override group  — pure attribute patch
+            #   2. Has college but count==1 (T5 default) AND base already has count > 1
+            #      — user is adding a college filter, not re-specifying count
+            #
+            # Specification conditions:
+            #   - Base is empty (first turn always replaces)
+            #   - Override has college AND count > 1 (user explicitly re-specified both)
+
+            has_college_in_override = any(g.get("college") for g in override_groups)
+            override_has_explicit_count = any(g.get("count", 1) > 1 for g in override_groups)
+            base_has_count = any(g.get("count", 1) > 1 for g in base_groups)
+
             is_modifier = (
                 bool(base_groups)
-                and not any(g.get("college") for g in override_groups)
+                and (
+                    not has_college_in_override  # pure attribute patch (gender, new_old, etc.)
+                    or (has_college_in_override and not override_has_explicit_count and base_has_count)
+                    # ^ college-add: "from CCE" after "2 volunteers" — patch college, keep count
+                )
             )
 
             if is_modifier:
                 # Build a patch dict from all override groups' attribute-only fields.
                 # Never patch "count" from a modifier turn — the user didn't re-specify a
                 # number, so T5 just emits the default 1, which would overwrite the real count.
+                # "college" IS patchable: "from CCE" after "2 volunteers" adds the college filter.
                 patch: Dict[str, Any] = {}
                 for og in override_groups:
-                    for key in ("gender", "new_old", "height_min", "height_max"):
+                    for key in ("gender", "new_old", "height_min", "height_max", "college"):
                         if og.get(key) is not None:
                             patch[key] = og[key]
 

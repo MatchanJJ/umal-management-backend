@@ -1,6 +1,6 @@
 # AssignAI NLP Service - Testing & Evaluation Report
 
-**Generated:** 2026-03-02 20:27:55
+**Generated:** 2026-03-02 23:01:01
 
 ---
 
@@ -35,18 +35,18 @@ FUNCTIONAL TESTING
 PERFORMANCE EVALUATION
 ----------------------------------------------------------------------
   Response Time (Latency)
-    • Minimum:          0.01 ms
-    • Median (P50):     0.01 ms
-    • Mean:             0.010192307692307693 ms
-    • P95:              0.01 ms
-    • P99:              0.02 ms
-    • Maximum:          0.02 ms
-    • Std Deviation:    0.0013867504905630728 ms
+    • Minimum:          110.72 ms
+    • Median (P50):     329.075 ms
+    • Mean:             381.0125 ms
+    • P95:              720.17 ms
+    • P99:              832.4 ms
+    • Maximum:          832.4 ms
+    • Std Deviation:    174.4656089474145 ms
 
   Throughput
-    • Total Requests:   52
+    • Total Requests:   58
     • Successful:       52
-    • Errors:           0
+    • Errors:           6
 
 QUALITY METRICS
 ----------------------------------------------------------------------
@@ -65,12 +65,12 @@ Response Time Analysis (milliseconds)
 ----------------------------------------------------------------------
 Metric                    Value (ms)     Target (ms)          Status
 --------------------------------------------------------------------
-Minimum                          0.0               -              OK
-P50 (Median)                     0.0             300          [PASS]
-Mean                             0.0             400          [PASS]
-P95                              0.0             800          [PASS]
-P99                              0.0            1500          [PASS]
-Maximum                          0.0            3000          [PASS]
+Minimum                        110.7               -              OK
+P50 (Median)                   329.1             300          [HIGH]
+Mean                           381.0             400          [PASS]
+P95                            720.2             800          [PASS]
+P99                            832.4            1500          [PASS]
+Maximum                        832.4            3000          [PASS]
 
 
 TOKEN USAGE ANALYSIS
