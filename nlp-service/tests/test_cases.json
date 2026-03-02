@@ -1,0 +1,820 @@
+[
+  {
+    "category": "Basic Single-Group Constraints",
+    "test_id": "basic_001",
+    "description": "Simple request: 2 female volunteers with no specific college",
+    "input": "I need 2 females",
+    "expected_output": {
+      "groups": [{"count": 2, "gender": "F"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Basic Single-Group Constraints",
+    "test_id": "basic_002",
+    "description": "Request with count and college",
+    "input": "Get 3 volunteers from CCE",
+    "expected_output": {
+      "groups": [{"count": 3, "college": "CCE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Basic Single-Group Constraints",
+    "test_id": "basic_003",
+    "description": "Explicit count and gender",
+    "input": "5 freshmen males",
+    "expected_output": {
+      "groups": [{"count": 5, "gender": "M", "new_old": "new"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Basic Single-Group Constraints",
+    "test_id": "basic_004",
+    "description": "Request with college abbreviation",
+    "input": "Need 1 engineer from CEE",
+    "expected_output": {
+      "groups": [{"count": 1, "college": "CEE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Basic Single-Group Constraints",
+    "test_id": "basic_005",
+    "description": "Architect college specification",
+    "input": "2 architects",
+    "expected_output": {
+      "groups": [{"count": 2, "college": "CAFE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Multi-Group Constraints",
+    "test_id": "multi_001",
+    "description": "Two groups with different genders",
+    "input": "2 freshie females from CCE and 1 veteran male from CEE",
+    "expected_output": {
+      "groups": [
+        {"count": 2, "college": "CCE", "gender": "F", "new_old": "new"},
+        {"count": 1, "college": "CEE", "gender": "M", "new_old": "old"}
+      ],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Multi-Group Constraints",
+    "test_id": "multi_002",
+    "description": "Three groups with mixed specifications",
+    "input": "1 female from CCE, 2 males from CAFE, and 3 from CHE",
+    "expected_output": {
+      "groups": [
+        {"count": 1, "gender": "F", "college": "CCE"},
+        {"count": 2, "gender": "M", "college": "CAFE"},
+        {"count": 3, "college": "CHE"}
+      ],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Multi-Group Constraints",
+    "test_id": "multi_003",
+    "description": "Multiple groups with experience levels",
+    "input": "Get 3 newbie females and 2 experienced males",
+    "expected_output": {
+      "groups": [
+        {"count": 3, "gender": "F", "new_old": "new"},
+        {"count": 2, "gender": "M", "new_old": "old"}
+      ],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Priority Rules",
+    "test_id": "priority_001",
+    "description": "Male-first priority",
+    "input": "I prefer males first, need 5 volunteers",
+    "expected_output": {
+      "groups": [{"count": 5}],
+      "global": {"conflict_ok": false, "priority_rules": ["male_first"]}
+    },
+    "expected_fields": ["groups", "global.priority_rules"]
+  },
+  {
+    "category": "Priority Rules",
+    "test_id": "priority_002",
+    "description": "Female-first priority",
+    "input": "Get girls, preferably freshies. Need 6 volunteers",
+    "expected_output": {
+      "groups": [{"count": 6, "gender": "F", "new_old": "new"}],
+      "global": {"conflict_ok": false, "priority_rules": ["female_first", "new_first"]}
+    },
+    "expected_fields": ["groups", "global.priority_rules"]
+  },
+  {
+    "category": "Priority Rules",
+    "test_id": "priority_003",
+    "description": "Attendance priority",
+    "input": "Kahit may klase, best attendance priority. Need 3 people",
+    "expected_output": {
+      "groups": [{"count": 3}],
+      "global": {"conflict_ok": true, "priority_rules": ["attendance_first"]}
+    },
+    "expected_fields": ["groups", "global.priority_rules"]
+  },
+  {
+    "category": "Priority Rules",
+    "test_id": "priority_004",
+    "description": "New member priority",
+    "input": "Let's give newbies a chance. Need 4 volunteers",
+    "expected_output": {
+      "groups": [{"count": 4, "new_old": "new"}],
+      "global": {"conflict_ok": false, "priority_rules": ["new_first"]}
+    },
+    "expected_fields": ["groups", "global.priority_rules"]
+  },
+  {
+    "category": "Priority Rules",
+    "test_id": "priority_005",
+    "description": "Old/veteran priority",
+    "input": "Need experienced members. 5 volunteers only.",
+    "expected_output": {
+      "groups": [{"count": 5, "new_old": "old"}],
+      "global": {"conflict_ok": false, "priority_rules": ["old_first"]}
+    },
+    "expected_fields": ["groups", "global.priority_rules"]
+  },
+  {
+    "category": "Schedule Conflict Handling",
+    "test_id": "conflict_001",
+    "description": "Accept class conflicts",
+    "input": "Can have class conflicts. Need 2 volunteers",
+    "expected_output": {
+      "groups": [{"count": 2}],
+      "global": {"conflict_ok": true}
+    },
+    "expected_fields": ["groups", "global.conflict_ok"]
+  },
+  {
+    "category": "Schedule Conflict Handling",
+    "test_id": "conflict_002",
+    "description": "Explicit no conflicts allowed",
+    "input": "No conflicts allowed. Get 3 people",
+    "expected_output": {
+      "groups": [{"count": 3}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global.conflict_ok"]
+  },
+  {
+    "category": "Schedule Conflict Handling",
+    "test_id": "conflict_003",
+    "description": "Flexible scheduling with high attendance",
+    "input": "Flexible scheduling, but best attendance must apply. Need 4",
+    "expected_output": {
+      "groups": [{"count": 4}],
+      "global": {"conflict_ok": true, "priority_rules": ["attendance_first"]}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Height Constraints",
+    "test_id": "height_001",
+    "description": "Males taller than females",
+    "input": "Males should be taller than the females. Need 3 guys and 2 girls",
+    "expected_output": {
+      "groups": [
+        {"count": 3, "gender": "M"},
+        {"count": 2, "gender": "F"}
+      ],
+      "global": {"conflict_ok": false, "height_rule": "male_taller_than_female"}
+    },
+    "expected_fields": ["groups", "global.height_rule"]
+  },
+  {
+    "category": "Height Constraints",
+    "test_id": "height_002",
+    "description": "Specific height requirements",
+    "input": "Need tall volunteers, 5'6 and above. Need 2",
+    "expected_output": {
+      "groups": [{"count": 2, "height_min": 66}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Height Constraints",
+    "test_id": "height_003",
+    "description": "Height range",
+    "input": "Need people between 5'4 and 6'2. Get 3",
+    "expected_output": {
+      "groups": [{"count": 3, "height_min": 64, "height_max": 74}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Tagalog/Mixed Language",
+    "test_id": "tagalog_001",
+    "description": "Tagalog specification - females",
+    "input": "Kailangan ko ng 3 babae",
+    "expected_output": {
+      "groups": [{"count": 3, "gender": "F"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Tagalog/Mixed Language",
+    "test_id": "tagalog_002",
+    "description": "Tagalog with college name",
+    "input": "Kailangan ko ng 2 tao mula sa CAFE",
+    "expected_output": {
+      "groups": [{"count": 2, "college": "CAFE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Tagalog/Mixed Language",
+    "test_id": "tagalog_003",
+    "description": "Mixed English-Tagalog",
+    "input": "Get 2 ate from CAFE, fresh lang",
+    "expected_output": {
+      "groups": [{"count": 2, "college": "CAFE", "gender": "F", "new_old": "new"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Tagalog/Mixed Language",
+    "test_id": "tagalog_004",
+    "description": "Tagalog with priority",
+    "input": "Kahit may klase, just get them. Need 4",
+    "expected_output": {
+      "groups": [{"count": 4}],
+      "global": {"conflict_ok": true}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Edge Cases - Ambiguous Input",
+    "test_id": "edge_001",
+    "description": "Vague volunteer need",
+    "input": "Just get some people",
+    "expected_output": {
+      "groups": [{}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"],
+    "allows_fallback": true
+  },
+  {
+    "category": "Edge Cases - Ambiguous Input",
+    "test_id": "edge_002",
+    "description": "Missing count specification",
+    "input": "From CEE college",
+    "expected_output": {
+      "groups": [{"college": "CEE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"],
+    "allows_fallback": true
+  },
+  {
+    "category": "Edge Cases - Ambiguous Input",
+    "test_id": "edge_003",
+    "description": "Only gender specified",
+    "input": "Males only",
+    "expected_output": {
+      "groups": [{"gender": "M"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Edge Cases - Contradictions",
+    "test_id": "edge_004",
+    "description": "Contradictory gender in groups",
+    "input": "1 male and 1 female, but must be all males",
+    "expected_output": {
+      "groups": [
+        {"count": 1, "gender": "M"},
+        {"count": 1, "gender": "F"}
+      ],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups", "global"],
+    "note": "Model should capture both specs, let application resolve"
+  },
+  {
+    "category": "Edge Cases - Contradictions",
+    "test_id": "edge_005",
+    "description": "Conflicting attendance rules",
+    "input": "No conflicts allowed but best attendance must apply",
+    "expected_output": {
+      "groups": [{}],
+      "global": {"conflict_ok": false, "priority_rules": ["attendance_first"]}
+    },
+    "expected_fields": ["groups", "global"],
+    "note": "Both flags set; app chooses priority"
+  },
+  {
+    "category": "Confirmation Cases",
+    "test_id": "confirm_001",
+    "description": "User confirming assignment",
+    "input": "Yes, that's perfect!",
+    "expected_output": {
+      "is_confirming": true,
+      "groups": [],
+      "global": {}
+    },
+    "expected_fields": ["is_confirming"]
+  },
+  {
+    "category": "Confirmation Cases",
+    "test_id": "confirm_002",
+    "description": "Affirmative response",
+    "input": "Looks good, proceed",
+    "expected_output": {
+      "is_confirming": true,
+      "groups": [],
+      "global": {}
+    },
+    "expected_fields": ["is_confirming"]
+  },
+  {
+    "category": "Confirmation Cases",
+    "test_id": "confirm_003",
+    "description": "Negative response",
+    "input": "No, that doesn't work",
+    "expected_output": {
+      "is_confirming": false,
+      "groups": [],
+      "global": {}
+    },
+    "expected_fields": ["is_confirming"]
+  },
+  {
+    "category": "Confirmation Cases",
+    "test_id": "confirm_004",
+    "description": "Request with modification (not pure confirmation)",
+    "input": "Ok but add one more from CAFE",
+    "expected_output": {
+      "is_confirming": false,
+      "groups": [{"count": 1, "college": "CAFE"}],
+      "global": {}
+    },
+    "expected_fields": ["groups", "is_confirming"]
+  },
+  {
+    "category": "College Variations",
+    "test_id": "college_001",
+    "description": "Computer Engineering shorthand",
+    "input": "2 CompE students",
+    "expected_output": {
+      "groups": [{"count": 2, "college": "CTE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "College Variations",
+    "test_id": "college_002",
+    "description": "Civil Engineering full name",
+    "input": "3 Civil Engineers",
+    "expected_output": {
+      "groups": [{"count": 3, "college": "CEE"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "College Variations",
+    "test_id": "college_003",
+    "description": "Multiple colleges in one request",
+    "input": "1 from CCE or CTE, and 2 from CAFE",
+    "expected_output": {
+      "groups": [
+        {"count": 1},
+        {"count": 2, "college": "CAFE"}
+      ],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"],
+    "note": "OR logic handled by application"
+  },
+  {
+    "category": "Experience Level Variations",
+    "test_id": "exp_001",
+    "description": "Freshman specification",
+    "input": "Need 2 freshmen",
+    "expected_output": {
+      "groups": [{"count": 2, "new_old": "new"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Experience Level Variations",
+    "test_id": "exp_002",
+    "description": "Senior specification",
+    "input": "Experienced senior members, 3 needed",
+    "expected_output": {
+      "groups": [{"count": 3, "new_old": "old"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Experience Level Variations",
+    "test_id": "exp_003",
+    "description": "Veteran abbreviation",
+    "input": "2 vets",
+    "expected_output": {
+      "groups": [{"count": 2, "new_old": "old"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Complex Requests",
+    "test_id": "complex_001",
+    "description": "Multi-criteria with priorities",
+    "input": "Need 3 females from CAFE (veterans preferred) with attendance priority",
+    "expected_output": {
+      "groups": [{"count": 3, "gender": "F", "college": "CAFE", "new_old": "old"}],
+      "global": {"conflict_ok": false, "priority_rules": ["attendance_first"]}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Complex Requests",
+    "test_id": "complex_002",
+    "description": "Balancing teams composition",
+    "input": "Mix of 2 females and 2 males, half fresh half experienced",
+    "expected_output": {
+      "groups": [
+        {"count": 2, "gender": "F", "new_old": "new"},
+        {"count": 2, "gender": "M", "new_old": "old"}
+      ],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Complex Requests",
+    "test_id": "complex_003",
+    "description": "Full event specification",
+    "input": "For the event at 2-4pm: 4 total volunteers, preferably 2 females from CCE or CAFE (must be experienced), 2 males, attendance is crucial",
+    "expected_output": {
+      "groups": [
+        {"count": 2, "gender": "F", "college": "CCE", "new_old": "old"},
+        {"count": 2, "gender": "M"}
+      ],
+      "global": {"conflict_ok": false, "priority_rules": ["attendance_first"]}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Complex Requests",
+    "test_id": "complex_004",
+    "description": "Event with scheduling flexibility",
+    "input": "5 volunteers needed, can work with schedule conflicts, prefer new members to get experience, males prioritized",
+    "expected_output": {
+      "groups": [{"count": 5, "gender": "M", "new_old": "new"}],
+      "global": {"conflict_ok": true, "priority_rules": ["male_first", "new_first"]}
+    },
+    "expected_fields": ["groups", "global"]
+  },
+  {
+    "category": "Numeric Variations",
+    "test_id": "numeric_001",
+    "description": "Spelled-out number",
+    "input": "Need three females",
+    "expected_output": {
+      "groups": [{"count": 3, "gender": "F"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Numeric Variations",
+    "test_id": "numeric_002",
+    "description": "Large count",
+    "input": "Get me 25 volunteers",
+    "expected_output": {
+      "groups": [{"count": 25}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Numeric Variations",
+    "test_id": "numeric_003",
+    "description": "Single volunteer",
+    "input": "Just 1 person needed",
+    "expected_output": {
+      "groups": [{"count": 1}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Negation Patterns",
+    "test_id": "negate_001",
+    "description": "No females",
+    "input": "No females allowed, males only",
+    "expected_output": {
+      "groups": [{"gender": "M"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Negation Patterns",
+    "test_id": "negate_002",
+    "description": "No freshmen",
+    "input": "Experienced only, no freshies",
+    "expected_output": {
+      "groups": [{"new_old": "old"}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"]
+  },
+  {
+    "category": "Negation Patterns",
+    "test_id": "negate_003",
+    "description": "Exclude specific college",
+    "input": "Anyone except CCE",
+    "expected_output": {
+      "groups": [{}],
+      "global": {"conflict_ok": false}
+    },
+    "expected_fields": ["groups"],
+    "note": "Exclusion logic handled by application"
+  },
+  {
+    "category": "Special Cases",
+    "test_id": "special_001",
+    "description": "Greeting/pleasantry only",
+    "input": "Hi! How are you?",
+    "expected_output": {
+      "groups": [],
+      "global": {},
+      "is_confirming": false
+    },
+    "expected_fields": ["groups"],
+    "allows_fallback": true
+  },
+  {
+    "category": "Special Cases",
+    "test_id": "special_002",
+    "description": "Contextual reference",
+    "input": "Same as last time",
+    "expected_output": {
+      "groups": [],
+      "global": {},
+      "is_confirming": false
+    },
+    "expected_fields": ["groups"],
+    "note": "Requires conversation history context"
+  },
+  {
+    "category": "Special Cases",
+    "test_id": "special_003",
+    "description": "Question about volunteers",
+    "input": "How many volunteers can you get me by Thursday?",
+    "expected_output": {
+      "groups": [],
+      "global": {},
+      "is_confirming": false
+    },
+    "expected_fields": ["groups"],
+    "allows_fallback": true
+  },
+  {
+    "category": "Special Cases",
+    "test_id": "special_004",
+    "description": "Empty or whitespace only",
+    "input": "   ",
+    "expected_output": {
+      "groups": [],
+      "global": {}
+    },
+    "expected_fields": ["groups", "global"],
+    "allows_fallback": true
+  },
+  {
+    "category": "Multi-Turn Conversation",
+    "type": "multi_turn",
+    "test_id": "multiturn_001",
+    "description": "Progressive modifier chain: count -> gender modifier -> experience modifier",
+    "conversation": [
+      {
+        "turn": 1,
+        "input": "I need 3 volunteers",
+        "description": "Initial count-only request",
+        "merge_action": "initial",
+        "expected_parse": {"groups": [{"count": 3}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 3}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 2,
+        "input": "Female please",
+        "description": "Modifier: patches gender=F, count must be preserved",
+        "merge_action": "modifier",
+        "expected_parse": {"groups": [{"gender": "F"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 3, "gender": "F"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 3,
+        "input": "New members only",
+        "description": "Modifier: patches new_old=new, count and gender both preserved",
+        "merge_action": "modifier",
+        "expected_parse": {"groups": [{"new_old": "new"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 3, "gender": "F", "new_old": "new"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      }
+    ]
+  },
+  {
+    "category": "Multi-Turn Conversation",
+    "type": "multi_turn",
+    "test_id": "multiturn_002",
+    "description": "Priority accumulation: count -> add priority rule -> flip conflict_ok and add second rule",
+    "conversation": [
+      {
+        "turn": 1,
+        "input": "Need 5 people",
+        "description": "Initial count request",
+        "merge_action": "initial",
+        "expected_parse": {"groups": [{"count": 5}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 5}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 2,
+        "input": "Males first please",
+        "description": "Modifier: patches gender=M and adds male_first priority rule",
+        "merge_action": "modifier",
+        "expected_parse": {"groups": [{"gender": "M"}], "global": {"conflict_ok": false, "priority_rules": ["male_first"]}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 5, "gender": "M"}], "global": {"conflict_ok": false, "priority_rules": ["male_first"]}, "is_confirming": false}
+      },
+      {
+        "turn": 3,
+        "input": "Attendance takes priority, class conflicts are fine",
+        "description": "Global-only: conflict_ok flips true, attendance_first appended to priority_rules",
+        "merge_action": "global_only",
+        "expected_parse": {"groups": [], "global": {"conflict_ok": true, "priority_rules": ["attendance_first"]}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 5, "gender": "M"}], "global": {"conflict_ok": true, "priority_rules": ["male_first", "attendance_first"]}, "is_confirming": false}
+      }
+    ]
+  },
+  {
+    "category": "Multi-Turn Conversation",
+    "type": "multi_turn",
+    "test_id": "multiturn_003",
+    "description": "Specification replaces then modifier applies: count+gender -> college spec (replaces) -> experience modifier",
+    "note": "Specification turn (with college) fully resets the group list; subsequent modifiers patch the new groups",
+    "conversation": [
+      {
+        "turn": 1,
+        "input": "2 female volunteers",
+        "description": "Initial: count + gender, no college",
+        "merge_action": "initial",
+        "expected_parse": {"groups": [{"count": 2, "gender": "F"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 2, "gender": "F"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 2,
+        "input": "From CCE",
+        "description": "Specification: college present -> replaces entire group list, prior count+gender are gone",
+        "merge_action": "specification",
+        "expected_parse": {"groups": [{"college": "CCE"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"college": "CCE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 3,
+        "input": "New members please",
+        "description": "Modifier: patches new_old=new onto the CCE group (no college in override)",
+        "merge_action": "modifier",
+        "expected_parse": {"groups": [{"new_old": "new"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"college": "CCE", "new_old": "new"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      }
+    ]
+  },
+  {
+    "category": "Multi-Turn Conversation",
+    "type": "multi_turn",
+    "test_id": "multiturn_004",
+    "description": "Multi-group spec -> global conflict update -> confirmation",
+    "conversation": [
+      {
+        "turn": 1,
+        "input": "I need 2 females from CCE and 1 male from CAFE",
+        "description": "Initial multi-group specification with two colleges",
+        "merge_action": "initial",
+        "expected_parse": {"groups": [{"count": 2, "gender": "F", "college": "CCE"}, {"count": 1, "gender": "M", "college": "CAFE"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 2, "gender": "F", "college": "CCE"}, {"count": 1, "gender": "M", "college": "CAFE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 2,
+        "input": "No class conflicts allowed",
+        "description": "Global-only: conflict_ok=false confirmed, both groups from turn 1 unchanged",
+        "merge_action": "global_only",
+        "expected_parse": {"groups": [], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 2, "gender": "F", "college": "CCE"}, {"count": 1, "gender": "M", "college": "CAFE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 3,
+        "input": "Perfect, looks good!",
+        "description": "Confirmation: is_confirming=true, all accumulated state preserved",
+        "merge_action": "confirm",
+        "expected_parse": {"groups": [], "global": {}, "is_confirming": true},
+        "expected_merged": {"groups": [{"count": 2, "gender": "F", "college": "CCE"}, {"count": 1, "gender": "M", "college": "CAFE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": true}
+      }
+    ]
+  },
+  {
+    "category": "Multi-Turn Conversation",
+    "type": "multi_turn",
+    "test_id": "multiturn_005",
+    "description": "Tagalog multi-turn: Tagalog initial -> Tagalog college specification -> Tagalog modifier",
+    "conversation": [
+      {
+        "turn": 1,
+        "input": "Kailangan ko ng 3 babae",
+        "description": "Tagalog: 3 female volunteers",
+        "merge_action": "initial",
+        "expected_parse": {"groups": [{"count": 3, "gender": "F"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 3, "gender": "F"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false},
+        "allows_fallback": true
+      },
+      {
+        "turn": 2,
+        "input": "Mula sa CCE",
+        "description": "Tagalog specification: college=CCE -> replaces groups",
+        "merge_action": "specification",
+        "expected_parse": {"groups": [{"college": "CCE"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"college": "CCE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false},
+        "allows_fallback": true
+      },
+      {
+        "turn": 3,
+        "input": "Bago lang, yung mga freshie",
+        "description": "Tagalog modifier: patches new_old=new onto the CCE group",
+        "merge_action": "modifier",
+        "expected_parse": {"groups": [{"new_old": "new"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"college": "CCE", "new_old": "new"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false},
+        "allows_fallback": true
+      }
+    ]
+  },
+  {
+    "category": "Multi-Turn Conversation",
+    "type": "multi_turn",
+    "test_id": "multiturn_006",
+    "description": "Mid-conversation correction: initial spec -> full override -> add priority -> confirm",
+    "conversation": [
+      {
+        "turn": 1,
+        "input": "5 males from CTE",
+        "description": "Initial full specification with count, gender, college",
+        "merge_action": "initial",
+        "expected_parse": {"groups": [{"count": 5, "gender": "M", "college": "CTE"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 5, "gender": "M", "college": "CTE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 2,
+        "input": "Actually change to 3 males from CCE and 2 females from CAFE",
+        "description": "Specification override: completely replaces with 2 new groups, original CTE group is gone",
+        "merge_action": "specification",
+        "expected_parse": {"groups": [{"count": 3, "gender": "M", "college": "CCE"}, {"count": 2, "gender": "F", "college": "CAFE"}], "global": {"conflict_ok": false}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 3, "gender": "M", "college": "CCE"}, {"count": 2, "gender": "F", "college": "CAFE"}], "global": {"conflict_ok": false, "priority_rules": []}, "is_confirming": false}
+      },
+      {
+        "turn": 3,
+        "input": "Prioritize by attendance please",
+        "description": "Global-only: adds attendance_first rule, both groups preserved unchanged",
+        "merge_action": "global_only",
+        "expected_parse": {"groups": [], "global": {"conflict_ok": false, "priority_rules": ["attendance_first"]}, "is_confirming": false},
+        "expected_merged": {"groups": [{"count": 3, "gender": "M", "college": "CCE"}, {"count": 2, "gender": "F", "college": "CAFE"}], "global": {"conflict_ok": false, "priority_rules": ["attendance_first"]}, "is_confirming": false}
+      },
+      {
+        "turn": 4,
+        "input": "Yes, assign them now",
+        "description": "Final confirmation: is_confirming=true, all accumulated state preserved",
+        "merge_action": "confirm",
+        "expected_parse": {"groups": [], "global": {}, "is_confirming": true},
+        "expected_merged": {"groups": [{"count": 3, "gender": "M", "college": "CCE"}, {"count": 2, "gender": "F", "college": "CAFE"}], "global": {"conflict_ok": false, "priority_rules": ["attendance_first"]}, "is_confirming": true}
+      }
+    ]
+  }
+]

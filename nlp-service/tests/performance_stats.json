@@ -1,0 +1,12 @@
+{
+  "total_requests": 58,
+  "successful": 52,
+  "errors": 6,
+  "min_ms": 129.7,
+  "max_ms": 1218.39,
+  "mean_ms": 526.0159615384615,
+  "median_ms": 434.2,
+  "p95_ms": 1054.34,
+  "p99_ms": 1218.39,
+  "stddev_ms": 252.97244070823376
+}

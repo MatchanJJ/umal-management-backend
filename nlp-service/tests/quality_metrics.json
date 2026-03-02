@@ -1,0 +1,73 @@
+{
+  "total_cases": 52,
+  "parseable": 52,
+  "valid_schema": 52,
+  "invalid_values": 0,
+  "hallucinations": 0,
+  "by_category": {
+    "Basic Single-Group Constraints": {
+      "passed": 5,
+      "failed": 0
+    },
+    "Multi-Group Constraints": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Priority Rules": {
+      "passed": 5,
+      "failed": 0
+    },
+    "Schedule Conflict Handling": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Height Constraints": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Tagalog/Mixed Language": {
+      "passed": 4,
+      "failed": 0
+    },
+    "Edge Cases - Ambiguous Input": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Edge Cases - Contradictions": {
+      "passed": 2,
+      "failed": 0
+    },
+    "Confirmation Cases": {
+      "passed": 4,
+      "failed": 0
+    },
+    "College Variations": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Experience Level Variations": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Complex Requests": {
+      "passed": 4,
+      "failed": 0
+    },
+    "Numeric Variations": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Negation Patterns": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Special Cases": {
+      "passed": 4,
+      "failed": 0
+    },
+    "Multi-Turn Conversation": {
+      "passed": 6,
+      "failed": 0
+    }
+  }
+}
