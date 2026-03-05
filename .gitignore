@@ -24,3 +24,7 @@ Homestead.yaml
 Thumbs.db
 .venv*
 myenv
+venv/
+.venv/
+myenv/
+nlp-service/venv/
