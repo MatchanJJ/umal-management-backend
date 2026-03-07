@@ -290,19 +290,100 @@ class AssignAIService
 
     /**
      * Finalize assignments (human approved)
+     * 
+     * Handles three scenarios:
+     * 1. Slots full → require override confirmation
+     * 2. Partial fill with space → auto-append
+     * 3. Partial fill with overflow → require volunteer selection
      */
-    public function finalizeAssignments(int $eventId, array $memberIds): array
+    public function finalizeAssignments(int $eventId, array $memberIds, bool $confirmed = false): array
     {
         $event = Event::findOrFail($eventId);
         
-        // Clear existing assignments for this event
-        VolunteerAssignment::where('event_id', $eventId)->delete();
-
-        $assigned = [];
+        // Get current assignments
+        $existingAssignments = VolunteerAssignment::where('event_id', $eventId)
+            ->with('member')
+            ->get();
         
-        // Limit assignments to required_volunteers
-        $slotsAvailable = $event->required_volunteers;
-        $membersToAssign = array_slice($memberIds, 0, $slotsAvailable);
+        $currentCount = $existingAssignments->count();
+        $requiredCount = $event->required_volunteers;
+        $newCount = count($memberIds);
+        $totalAfterAppend = $currentCount + $newCount;
+        
+        // Scenario 1: Slots are full - need override confirmation
+        if ($currentCount >= $requiredCount && !$confirmed) {
+            return [
+                'success' => false,
+                'requires_confirmation' => true,
+                'confirmation_type' => 'override',
+                'message' => "This event already has {$currentCount}/{$requiredCount} volunteer(s) assigned. Do you want to replace them with the new selection?",
+                'current_assignments' => $existingAssignments,
+                'new_assignments_count' => min($newCount, $requiredCount),
+                'event_id' => $eventId,
+                'member_ids' => $memberIds
+            ];
+        }
+        
+        // Scenario 2: Partial fill with overflow - need volunteer selection
+        $availableSlots = $requiredCount - $currentCount;
+        if ($currentCount < $requiredCount && $totalAfterAppend > $requiredCount && !$confirmed) {
+            $overflow = $totalAfterAppend - $requiredCount;
+            return [
+                'success' => false,
+                'requires_confirmation' => true,
+                'confirmation_type' => 'overflow',
+                'message' => "Adding all {$newCount} volunteer(s) would exceed the limit. You have {$availableSlots} slot(s) available but are trying to add {$newCount} volunteer(s).",
+                'current_count' => $currentCount,
+                'required_count' => $requiredCount,
+                'available_slots' => $availableSlots,
+                'new_assignments_count' => $newCount,
+                'overflow_count' => $overflow,
+                'suggested_member_ids' => $memberIds,
+                'event_id' => $eventId
+            ];
+        }
+        
+        // Scenario 3: Partial fill with space - auto-append (no confirmation needed)
+        if ($currentCount < $requiredCount && $totalAfterAppend <= $requiredCount) {
+            // Append new assignments without clearing existing ones
+            $assigned = [];
+            $membersToAssign = array_slice($memberIds, 0, $availableSlots);
+            
+            foreach ($membersToAssign as $memberId) {
+                // Check for duplicates
+                if ($existingAssignments->where('member_id', $memberId)->count() > 0) {
+                    continue; // Skip duplicate
+                }
+                
+                $assignment = VolunteerAssignment::create([
+                    'event_id' => $eventId,
+                    'member_id' => $memberId,
+                    'assigned_by' => auth()->id(),
+                ]);
+                
+                $assigned[] = $assignment->load('member');
+            }
+            
+            // Update assigned_volunteers count
+            $event->assigned_volunteers = $currentCount + count($assigned);
+            $event->save();
+            
+            return [
+                'success' => true,
+                'action' => 'appended',
+                'message' => "Successfully added " . count($assigned) . " volunteer(s). Total: {$event->assigned_volunteers}/{$requiredCount}",
+                'assigned_count' => count($assigned),
+                'total_count' => $event->assigned_volunteers,
+                'assignments' => $assigned,
+                'event' => $event->fresh()->load('volunteerAssignments.member')
+            ];
+        }
+        
+        // Scenario 4: Override confirmed or overflow resolved - clear and replace
+        VolunteerAssignment::where('event_id', $eventId)->delete();
+        
+        $assigned = [];
+        $membersToAssign = array_slice($memberIds, 0, $requiredCount);
         
         foreach ($membersToAssign as $memberId) {
             $assignment = VolunteerAssignment::create([
@@ -310,16 +391,17 @@ class AssignAIService
                 'member_id' => $memberId,
                 'assigned_by' => auth()->id(),
             ]);
-
+            
             $assigned[] = $assignment->load('member');
         }
-
+        
         // Update assigned_volunteers count
         $event->assigned_volunteers = count($assigned);
         $event->save();
-
+        
         return [
             'success' => true,
+            'action' => 'replaced',
             'message' => "Successfully assigned " . count($assigned) . " volunteer(s)",
             'assigned_count' => count($assigned),
             'assignments' => $assigned,

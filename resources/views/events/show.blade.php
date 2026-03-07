@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', $event->title)
 
@@ -165,7 +165,7 @@
         </div>
     </div>
 
-    {{-- â”€â”€â”€ Right Slide-in Chat Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+    {{-- ─── Right Slide-in Chat Panel ──────────────────────────────────────────── --}}
     @if(auth()->user()->role && in_array(auth()->user()->role->name, ['admin', 'adviser']))
 
     {{-- Backdrop (semi-transparent overlay) --}}
@@ -198,7 +198,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                 </svg>
                 <span class="font-semibold text-white text-sm">AssignAI Chat</span>
-                <span class="text-xs text-blue-200">Â· {{ $event->title }}</span>
+                <span class="text-xs text-blue-200">· {{ $event->title }}</span>
             </div>
             <div class="flex items-center gap-2">
                 <button @click="clearChat()" title="New conversation"
@@ -220,44 +220,44 @@
         <div x-show="hasConstraints()" class="px-4 py-2 bg-blue-50 border-b border-blue-100 flex flex-wrap gap-1" x-cloak>
             <template x-if="mergedConstraints.gender_filter === 'M'">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                    â™‚ Male only
-                    <button @click="clearConstraint('gender_filter')" class="hover:text-blue-900 ml-0.5">Ã—</button>
+                    ♂ Male only
+                    <button @click="clearConstraint('gender_filter')" class="hover:text-blue-900 ml-0.5">×</button>
                 </span>
             </template>
             <template x-if="mergedConstraints.gender_filter === 'F'">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-700">
-                    â™€ Female only
-                    <button @click="clearConstraint('gender_filter')" class="hover:text-pink-900 ml-0.5">Ã—</button>
+                    ♀ Female only
+                    <button @click="clearConstraint('gender_filter')" class="hover:text-pink-900 ml-0.5">×</button>
                 </span>
             </template>
             <template x-if="mergedConstraints.gender_filter === 'split'">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                    âš§ Gender split
-                    <button @click="clearConstraint('gender_filter')" class="hover:text-purple-900 ml-0.5">Ã—</button>
+                    ⚧ Gender split
+                    <button @click="clearConstraint('gender_filter')" class="hover:text-purple-900 ml-0.5">×</button>
                 </span>
             </template>
             <template x-if="mergedConstraints.new_old_filter === 'new'">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                    âœ¨ New members
-                    <button @click="clearConstraint('new_old_filter')" class="hover:text-green-900 ml-0.5">Ã—</button>
+                    ✨ New members
+                    <button @click="clearConstraint('new_old_filter')" class="hover:text-green-900 ml-0.5">×</button>
                 </span>
             </template>
             <template x-if="mergedConstraints.new_old_filter === 'old'">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                    ðŸŽ– Veterans
-                    <button @click="clearConstraint('new_old_filter')" class="hover:text-amber-900 ml-0.5">Ã—</button>
+                    🎖 Veterans
+                    <button @click="clearConstraint('new_old_filter')" class="hover:text-amber-900 ml-0.5">×</button>
                 </span>
             </template>
             <template x-if="mergedConstraints.conflict_ok === false">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                    ðŸš« No class conflict
-                    <button @click="clearConstraint('conflict_ok')" class="hover:text-red-900 ml-0.5">Ã—</button>
+                    🚫 No class conflict
+                    <button @click="clearConstraint('conflict_ok')" class="hover:text-red-900 ml-0.5">×</button>
                 </span>
             </template>
             <template x-if="mergedConstraints.college_filter">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                    ðŸ« <span x-text="mergedConstraints.college_filter"></span>
-                    <button @click="clearConstraint('college_filter')" class="hover:text-indigo-900 ml-0.5">Ã—</button>
+                    🏫 <span x-text="mergedConstraints.college_filter"></span>
+                    <button @click="clearConstraint('college_filter')" class="hover:text-indigo-900 ml-0.5">×</button>
                 </span>
             </template>
         </div>
@@ -338,10 +338,10 @@
                                                     <p class="text-sm font-semibold text-gray-900 truncate"
                                                        x-text="rec.full_name || rec.member_id"></p>
                                                     <template x-if="rec.gender_label === 'M'">
-                                                        <span class="text-xs text-blue-500">♂</span>
+                                                        <span class="text-xs text-blue-500">?</span>
                                                     </template>
                                                     <template x-if="rec.gender_label === 'F'">
-                                                        <span class="text-xs text-pink-500">♀</span>
+                                                        <span class="text-xs text-pink-500">?</span>
                                                     </template>
                                                     <template x-if="rec.is_new_member == 1">
                                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">New</span>
@@ -349,7 +349,7 @@
                                                 </div>
                                                 <div class="flex items-center gap-2 mt-0.5">
                                                     <span class="text-xs text-gray-500" x-text="rec.college || ''"></span>
-                                                    <span class="text-xs text-gray-400">Â·</span>
+                                                    <span class="text-xs text-gray-400">·</span>
                                                     <span class="text-xs text-gray-500"
                                                           x-text="Math.round((rec.attendance_rate || 0) * 100) + '% attendance'"></span>
                                                 </div>
@@ -386,7 +386,7 @@
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                             </svg>
                                         </template>
-                                        <span x-text="finalizing ? 'Assigningâ€¦' : 'Assign ' + selectedCountForMessage(msg.recommendations) + ' selected'"></span>
+                                        <span x-text="finalizing ? 'Assigning…' : 'Assign ' + selectedCountForMessage(msg.recommendations) + ' selected'"></span>
                                     </button>
                                 </div>
                             </div>
@@ -422,7 +422,7 @@
                     @keydown.enter.prevent="if (!$event.shiftKey) sendMessage()"
                     :disabled="loading"
                     rows="1"
-                    placeholder="Describe your requirementsâ€¦ (Enter to send, Shift+Enter for new line)"
+                    placeholder="Describe your requirements… (Enter to send, Shift+Enter for new line)"
                     class="flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm
                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                            placeholder:text-gray-400 disabled:opacity-50 max-h-32 overflow-y-auto"
@@ -438,13 +438,13 @@
                 </button>
             </form>
             <p class="text-xs text-gray-400 mt-1.5 text-center">
-                AssignAI uses AI â€” always review before confirming.
+                AssignAI uses AI — always review before confirming.
             </p>
         </div>
     </div>
 
-    {{-- â”€â”€â”€ Alpine.js Component Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-    <script>
+    {{-- ─── Alpine.js Component Logic ──────────────────────────────────────── --}}
+{{--     <script>
     function assignAIChat(eventId, eventSize) {
         return {
             eventId,
@@ -459,8 +459,12 @@
                 groups: [],
                 global: { conflict_ok: null, priority_rules: [] },
             },
-            selectedMembers: {},   // member_id â†’ boolean
-
+            selectedMembers: {},   // member_id → boolean            showOverrideModal: false,            showOverrideModal: false,
+            showOverflowModal: false,
+            confirmationData: null,
+            overflowSelectedMembers: {}            showOverflowModal: false,
+            confirmationData: null,
+            overflowSelectedMembers: {}
             csrfToken() {
                 return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
             },
@@ -489,7 +493,7 @@
                             event_id: this.eventId,
                             message: text,
                             conversation_history: this.history.slice(0, -1), // exclude current message
-                            previous_merged_constraints: this.mergedConstraints, // O(1) merge — NLP skips re-parsing history
+                            previous_merged_constraints: this.mergedConstraints, // O(1) merge � NLP skips re-parsing history
                         }),
                     });
 
@@ -562,7 +566,7 @@
                 return recommendations.filter(r => this.selectedMembers[r.member_id] !== false).length;
             },
 
-            async finalizeFromMessage(recommendations) {
+            async finalizeFromMessage(recommendations, confirmed = false) {
                 const selectedIds = recommendations
                     .filter(r => this.selectedMembers[r.member_id] !== false)
                     .map(r => r.member_id)
@@ -585,32 +589,631 @@
                         body: JSON.stringify({
                             event_id: this.eventId,
                             member_ids: selectedIds.map(Number),
+                            confirmed: confirmed
                         }),
                     });
 
                     const data = await res.json();
 
                     if (data.success) {
+                        const action = data.action === 'appended' ? 'added' : 'assigned';
                         this.messages.push({
                             role: 'assistant',
-                            content: `âœ… Successfully assigned ${data.assigned_count} volunteer(s)! Refreshing pageâ€¦`,
+                            content: `✅ Successfully ${action} ${data.assigned_count} volunteer(s)! Refreshing page…`,
                             recommendations: [],
                         });
                         this.$nextTick(() => this.scrollToBottom());
                         setTimeout(() => location.reload(), 1200);
+                    } else if (data.requires_confirmation) {
+                        // Handle confirmation scenarios
+                        this.handleConfirmationRequired(data, recommendations);
                     } else {
                         throw new Error(data.message || 'Finalize failed');
                     }
                 } catch (err) {
                     this.messages.push({
                         role: 'assistant',
-                        content: 'âŒ Could not finalize: ' + (err.message || 'Unknown error'),
+                        content: '❌ Could not finalize: ' + (err.message || 'Unknown error'),
                         recommendations: [],
                     });
                     this.$nextTick(() => this.scrollToBottom());
                 } finally {
                     this.finalizing = false;
                 }
+            },
+            handleConfirmationRequired(data, recommendations) {
+                this.confirmationData = { ...data, recommendations };
+                
+                if (data.confirmation_type === 'override') {
+                    this.showOverrideModal = true;
+                } else if (data.confirmation_type === 'overflow') {
+                    // Initialize all members as selected for overflow modal
+                    this.overflowSelectedMembers = {};
+                    data.suggested_member_ids.forEach(memberId => {
+                        this.overflowSelectedMembers[memberId] = true;
+                    });
+                    this.showOverflowModal = true;
+                }
+            },
+
+            async confirmOverride() {
+                this.showOverrideModal = false;
+                await this.finalizeFromMessage(this.confirmationData.recommendations, true);
+                this.confirmationData = null;
+            },
+
+            cancelOverride() {
+                this.showOverrideModal = false;
+                this.messages.push({
+                    role: 'assistant',
+                    content: '� Assignment cancelled. Existing volunteers remain unchanged.',
+                    recommendations: [],
+                });
+                this.$nextTick(() => this.scrollToBottom());
+                this.confirmationData = null;
+            },
+
+            getOverflowSelectedCount() {
+                return Object.values(this.overflowSelectedMembers).filter(Boolean).length;
+            },
+
+            async confirmOverflow() {
+                const selectedIds = this.confirmationData.suggested_member_ids
+                    .filter(memberId => this.overflowSelectedMembers[memberId]);
+                
+                const availableSlots = this.confirmationData.available_slots;
+                
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one volunteer.');
+                    return;
+                }
+                
+                if (selectedIds.length > availableSlots) {
+                    alert(`You can only select ${availableSlots} volunteer(s). Currently selected: ${selectedIds.length}`);
+                    return;
+                }
+                
+                this.showOverflowModal = false;
+                
+                // Create a modified recommendations array with only selected members
+                const modifiedRecommendations = this.confirmationData.recommendations
+                    .filter(rec => selectedIds.includes(rec.member_id));
+                
+                await this.finalizeFromMessage(modifiedRecommendations, false);
+                this.confirmationData = null;
+                this.overflowSelectedMembers = {};
+            },
+
+            cancelOverflow() {
+                this.showOverflowModal = false;
+                this.messages.push({
+                    role: 'assistant',
+                    content: '� Assignment cancelled.',
+                    recommendations: [],
+                });
+                this.$nextTick(() => this.scrollToBottom());
+                this.confirmationData = null;
+                this.overflowSelectedMembers = {};
+            },
+            hasConstraints() {
+                const c = this.mergedConstraints;
+                return c.gender_filter !== null ||
+                       c.new_old_filter !== null ||
+                       c.conflict_ok !== null ||
+                       c.college_filter !== null ||
+                       (c.priority_rules && c.priority_rules.length > 0);
+            },
+
+            clearConstraint(key) {
+                if (key === 'priority_rules') {
+                    this.mergedConstraints.priority_rules = [];
+                } else {
+                    this.mergedConstraints[key] = null;
+                }
+            },
+
+            clearChat() {
+                this.messages = [];
+                this.history = [];
+                this.selectedMembers = {};
+                this.mergedConstraints = {
+                    gender_filter: null,
+                    new_old_filter: null,
+                    conflict_ok: null,
+                    college_filter: null,
+                    priority_rules: [],
+                };
+            },
+
+            scrollToBottom() {
+                const el = document.getElementById('chat-messages');
+                if (el) el.scrollTop = el.scrollHeight;
+            },
+
+            autoResize(el) {
+                el.style.height = 'auto';
+                el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+            },
+        };
+    }
+    </script> --}}{{-- Duplicate script removed - see after @endif --}}
+
+    {{-- Override Confirmation Modal --}}
+    <div x-show="showOverrideModal"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background-color: rgba(0, 0, 0, 0.5);">
+        <div @click.away="cancelOverride()"
+             class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all"
+             x-show="showOverrideModal"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <div class="flex items-start gap-3 mb-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">Override Existing Volunteers?</h3>
+                    <p class="mt-1 text-sm text-gray-600" x-text="confirmationData?.message"></p>
+                </div>
+            </div>
+            
+            <template x-if="confirmationData?.current_assignments">
+                <div class="mb-4 p-3 bg-gray-50 rounded-lg max-h-40 overflow-y-auto">
+                    <p class="text-xs font-semibold text-gray-700 mb-2">Currently assigned:</p>
+                    <div class="space-y-1">
+                        <template x-for="assignment in confirmationData.current_assignments" :key="assignment.id">
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span x-text="assignment.member?.name"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+            
+            {{-- Error Message --}}
+            <div x-show="overrideError" 
+                 x-cloak
+                 class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-600" x-text="overrideError"></p>
+            </div>
+            
+            <div class="flex gap-3 justify-end">
+                <button @click="cancelOverride()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button @click="confirmOverride()"
+                        :disabled="finalizing"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span x-show="!finalizing">Yes, Replace Volunteers</span>
+                    <span x-show="finalizing">Replacing...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Overflow Selection Modal --}}
+    <div x-show="showOverflowModal"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background-color: rgba(0, 0, 0, 0.5);">
+        <div @click.away="cancelOverflow()"
+             class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 transform transition-all"
+             x-show="showOverflowModal"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <div class="flex items-start gap-3 mb-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">Select Volunteers to Assign</h3>
+                    <p class="mt-1 text-sm text-gray-600" x-text="confirmationData?.message"></p>
+                    <p class="mt-2 text-xs font-medium text-blue-600">
+                        <span x-text="getOverflowSelectedCount()"></span> of <span x-text="confirmationData?.available_slots"></span> slots selected
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mb-4 max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                <template x-if="confirmationData?.recommendations">
+                    <div class="divide-y divide-gray-200">
+                        <template x-for="rec in confirmationData.recommendations" :key="rec.member_id">
+                            <label class="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors">
+                                <input type="checkbox"
+                                       :checked="overflowSelectedMembers[rec.member_id]"
+                                       @change="overflowSelectedMembers[rec.member_id] = $event.target.checked"
+                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-900" x-text="rec.name"></span>
+                                        <span class="text-xs font-bold"
+                                              :class="(rec.assignment_probability || 0) >= 0.7 ? 'text-green-600' : (rec.assignment_probability || 0) >= 0.4 ? 'text-amber-600' : 'text-gray-500'"
+                                              x-text="Math.round((rec.assignment_probability || 0) * 100) + '%'"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-xs text-gray-500" x-text="rec.college || ''"></span>
+                                        <template x-if="rec.has_class_conflict == 1">
+                                            <span class="text-xs text-amber-600">? Class conflict</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </label>
+                        </template>
+                    </div>
+                </template>
+            </div>
+            
+            {{-- Error Message --}}
+            <div x-show="overflowError" 
+                 x-cloak
+                 class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-600" x-text="overflowError"></p>
+            </div>
+            
+            <div class="flex gap-3 justify-end">
+                <button @click="cancelOverflow()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button @click="confirmOverflow()"
+                        :disabled="finalizing || getOverflowSelectedCount() === 0"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                    <span x-show="!finalizing">Assign Selected</span>
+                    <span x-show="finalizing">Assigning...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @endif
+
+    {{-- �"��"��"� Alpine.js Component Logic �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"� --}}
+    <script>
+    function assignAIChat(eventId, eventSize) {
+        return {
+            eventId,
+            eventSize,
+            panelOpen: false,
+            messages: [],
+            history: [],           // [{role, content}] sent to backend
+            input: '',
+            loading: false,
+            finalizing: false,
+            mergedConstraints: {
+                groups: [],
+                global: { conflict_ok: null, priority_rules: [] },
+            },
+            selectedMembers: {},   // member_id ? boolean
+            showOverrideModal: false,
+            showOverflowModal: false,
+            confirmationData: null,
+            overflowSelectedMembers: {},
+            overflowError: '',
+            overrideError: '',
+
+            csrfToken() {
+                return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            },
+
+            async sendMessage() {
+                const text = this.input.trim();
+                if (!text || this.loading) return;
+
+                this.input = '';
+                this.loading = true;
+
+                // Add user bubble
+                this.messages.push({ role: 'user', content: text });
+                this.history.push({ role: 'user', content: text });
+                this.$nextTick(() => this.scrollToBottom());
+
+                try {
+                    const res = await fetch('/api/assignai/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken(),
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            event_id: this.eventId,
+                            message: text,
+                            conversation_history: this.history.slice(0, -1), // exclude current message
+                            previous_merged_constraints: this.mergedConstraints, // O(1) merge � NLP skips re-parsing history
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(data.message || 'Request failed');
+                    }
+
+                    this.mergedConstraints = data.merged_constraints ?? this.mergedConstraints;
+
+                    // Auto-assign if user confirmed ("yes", "go ahead", "sige", etc.)
+                    if (data.is_confirming) {
+                        const lastRecs = [...this.messages]
+                            .reverse()
+                            .find(m => m.role === 'assistant' && m.recommendations && m.recommendations.length > 0)
+                            ?.recommendations ?? [];
+
+                        if (lastRecs.length > 0) {
+                            this.messages.push({
+                                role: 'assistant',
+                                content: data.reply,
+                                recommendations: [],
+                            });
+                            this.history.push({ role: 'assistant', content: data.reply });
+                            this.$nextTick(() => this.scrollToBottom());
+                            await this.finalizeFromMessage(lastRecs);
+                            return;
+                        }
+                    }
+
+                    // Build message with recommendations (if any)
+                    this.messages.push({
+                        role: 'assistant',
+                        content: data.reply,
+                        recommendations: data.recommendations ?? [],
+                    });
+
+                    this.history.push({
+                        role: 'assistant',
+                        content: data.reply,
+                    });
+
+                    // Initialize all as selected
+                    if (data.recommendations && Array.isArray(data.recommendations)) {
+                        data.recommendations.forEach(rec => {
+                            if (this.selectedMembers[rec.member_id] === undefined) {
+                                this.selectedMembers[rec.member_id] = true;
+                            }
+                        });
+                    }
+
+                    this.$nextTick(() => this.scrollToBottom());
+
+                } catch (err) {
+                    this.messages.push({
+                        role: 'assistant',
+                        content: '� Error: ' + (err.message || 'Network or server error'),
+                        recommendations: [],
+                    });
+                    this.$nextTick(() => this.scrollToBottom());
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            toggleMember(memberId, checked) {
+                this.selectedMembers[memberId] = checked;
+            },
+
+            selectedCount() {
+                return Object.values(this.selectedMembers).filter(Boolean).length;
+            },
+
+            selectedCountForMessage(recommendations) {
+                if (!recommendations || !Array.isArray(recommendations)) return 0;
+                return recommendations.filter(r => this.selectedMembers[r.member_id] !== false).length;
+            },
+
+            async finalizeFromMessage(recommendations, confirmed = false) {
+                const selectedIds = recommendations
+                    .filter(r => this.selectedMembers[r.member_id] !== false)
+                    .map(r => r.member_id)
+                    .filter(id => !!id);
+
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one volunteer to assign.');
+                    return;
+                }
+
+                this.finalizing = true;
+                try {
+                    const res = await fetch('/api/assignai/finalize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken(),
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            event_id: this.eventId,
+                            member_ids: selectedIds.map(Number),
+                            confirmed: confirmed
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        const action = data.action === 'appended' ? 'added' : 'assigned';
+                        this.messages.push({
+                            role: 'assistant',
+                            content: `✅ Successfully ${action} ${data.assigned_count} volunteer(s)! Refreshing page…`,
+                            recommendations: [],
+                        });
+                        this.$nextTick(() => this.scrollToBottom());
+                        setTimeout(() => location.reload(), 1200);
+                    } else if (data.requires_confirmation) {
+                        // Handle confirmation scenarios
+                        this.handleConfirmationRequired(data, recommendations);
+                    } else {
+                        throw new Error(data.message || 'Finalize failed');
+                    }
+                } catch (err) {
+                    this.messages.push({
+                        role: 'assistant',
+                        content: '� Could not finalize: ' + (err.message || 'Unknown error'),
+                        recommendations: [],
+                    });
+                    this.$nextTick(() => this.scrollToBottom());
+                } finally {
+                    this.finalizing = false;
+                }
+            },
+
+            handleConfirmationRequired(data, recommendations) {
+                this.confirmationData = { ...data, recommendations };
+                
+                if (data.confirmation_type === 'override') {
+                    this.showOverrideModal = true;
+                } else if (data.confirmation_type === 'overflow') {
+                    // Initialize all members as selected for overflow modal
+                    this.overflowSelectedMembers = {};
+                    data.suggested_member_ids.forEach(memberId => {
+                        this.overflowSelectedMembers[memberId] = true;
+                    });
+                    this.showOverflowModal = true;
+                }
+            },
+
+            async confirmOverride() {
+                this.overrideError = '';
+                this.finalizing = true;
+                
+                try {
+                    const memberIds = this.confirmationData.recommendations.map(r => r.member_id);
+                    
+                    const res = await fetch('/api/assignai/finalize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken(),
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            event_id: this.eventId,
+                            member_ids: memberIds,
+                            confirmed: true
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        this.showOverrideModal = false;
+                        this.messages.push({
+                            role: 'assistant',
+                            content: `✅ Successfully replaced volunteers! ${data.assigned_count} volunteer(s) assigned. Refreshing page…`,
+                            recommendations: [],
+                        });
+                        this.$nextTick(() => this.scrollToBottom());
+                        setTimeout(() => location.reload(), 1200);
+                    } else {
+                        this.overrideError = data.message || 'Assignment failed';
+                    }
+                } catch (err) {
+                    this.overrideError = err.message || 'Network error occurred';
+                } finally {
+                    this.finalizing = false;
+                }
+            },
+
+            cancelOverride() {
+                this.showOverrideModal = false;
+                this.overrideError = '';
+                this.messages.push({
+                    role: 'assistant',
+                    content: '� Assignment cancelled. Existing volunteers remain unchanged.',
+                    recommendations: [],
+                });
+                this.$nextTick(() => this.scrollToBottom());
+                this.confirmationData = null;
+            },
+
+            getOverflowSelectedCount() {
+                return Object.values(this.overflowSelectedMembers).filter(Boolean).length;
+            },
+
+            async confirmOverflow() {
+                const selectedIds = this.confirmationData.suggested_member_ids
+                    .filter(memberId => this.overflowSelectedMembers[memberId]);
+                
+                const availableSlots = this.confirmationData.available_slots;
+                
+                if (selectedIds.length === 0) {
+                    this.overflowError = 'Please select at least one volunteer.';
+                    return;
+                }
+                
+                if (selectedIds.length > availableSlots) {
+                    this.overflowError = `You can only select ${availableSlots} volunteer(s). Currently selected: ${selectedIds.length}`;
+                    return;
+                }
+                
+                this.overflowError = '';
+                this.finalizing = true;
+                
+                try {
+                    const res = await fetch('/api/assignai/finalize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken(),
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            event_id: this.eventId,
+                            member_ids: selectedIds,
+                            confirmed: false
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        this.showOverflowModal = false;
+                        const action = data.action === 'appended' ? 'added' : 'assigned';
+                        this.messages.push({
+                            role: 'assistant',
+                            content: `✅ Successfully ${action} ${data.assigned_count} volunteer(s)! Refreshing page…`,
+                            recommendations: [],
+                        });
+                        this.$nextTick(() => this.scrollToBottom());
+                        setTimeout(() => location.reload(), 1200);
+                    } else {
+                        this.overflowError = data.message || 'Assignment failed';
+                    }
+                } catch (err) {
+                    this.overflowError = err.message || 'Network error occurred';
+                } finally {
+                    this.finalizing = false;
+                }
+            },
+
+            cancelOverflow() {
+                this.showOverflowModal = false;
+                this.overflowError = '';
+                this.messages.push({
+                    role: 'assistant',
+                    content: '� Assignment cancelled.',
+                    recommendations: [],
+                });
+                this.$nextTick(() => this.scrollToBottom());
+                this.confirmationData = null;
+                this.overflowSelectedMembers = {};
             },
 
             hasConstraints() {
@@ -655,7 +1258,6 @@
         };
     }
     </script>
-    @endif
 
 </div>
 @endsection
