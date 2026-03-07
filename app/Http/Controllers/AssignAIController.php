@@ -62,7 +62,8 @@ class AssignAIController extends Controller
      * 
      * Body: {
      *   "event_id": 12,
-     *   "member_ids": [3, 7, 9, 10]
+     *   "member_ids": [3, 7, 9, 10],
+     *   "confirmed": false (optional)
      * }
      */
     public function finalize(Request $request): JsonResponse
@@ -70,12 +71,14 @@ class AssignAIController extends Controller
         $validated = $request->validate([
             'event_id' => 'required|integer|exists:events,id',
             'member_ids' => 'required|array|min:1',
-            'member_ids.*' => 'required|integer|exists:members,id'
+            'member_ids.*' => 'required|integer|exists:members,id',
+            'confirmed' => 'nullable|boolean'
         ]);
 
         $result = $this->assignAI->finalizeAssignments(
             $validated['event_id'],
-            $validated['member_ids']
+            $validated['member_ids'],
+            $validated['confirmed'] ?? false
         );
 
         return response()->json($result);
