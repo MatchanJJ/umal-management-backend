@@ -23,7 +23,7 @@ class MemberWhitelistSeeder extends Seeder
             
             // Pre-approved adviser
             [
-                'email' => 'adviser@umindanao.edu.ph',
+                'email' => 'wilbertjosh.alfornon@umindanao.edu.ph',
                 'approved_by' => null,
                 'approved_role' => 'adviser',
                 'status' => 'approved',

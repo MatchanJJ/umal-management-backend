@@ -48,7 +48,7 @@
 
                 <div class="text-center">
                     <p class="text-xs text-gray-500">
-                        Only university email addresses (@university.edu.ph, @uc-bcf.edu.ph) are allowed.
+                        Only university email addresses (@university.edu.ph) are allowed.
                     </p>
                     <p class="text-xs text-gray-500 mt-2">
                         New users will be placed in a pending approval queue.
