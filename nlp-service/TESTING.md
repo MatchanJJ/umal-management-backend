@@ -181,6 +181,48 @@ pytest nlp-service/tests/test_semantic_parser_performance.py::TestResponseTime::
 
 ---
 
+## Visualizations
+
+### **Multi-Turn Conversation Visualization**
+
+A comprehensive visual chart is available to help understand and analyze multi-turn conversation test flows.
+
+**Generate Visualization:**
+
+```bash
+# Generate test results visualization
+python nlp-service/tests/visualize_multiturn.py
+
+# Or use the test runner with -Visualize flag
+.\nlp-service\run_tests.ps1 -Visualize
+
+# Run tests AND generate visualization
+.\nlp-service\run_tests.ps1 -GenerateReport -Visualize
+```
+
+**Generated Chart:**
+
+**multiturn_test_results.png** - Single comprehensive image showing:
+- Bar chart: Turns per conversation (6 test cases)
+- Pie chart: Merge action distribution across all turns
+- Flow diagram: All 6 conversation flows with turn sequences
+- Legend: Color-coded merge action types
+
+**Multi-Turn Test Coverage:**
+- 6 conversation scenarios
+- 17 total turns across all scenarios
+- 5 merge action types tested (initial, modifier, specification, global_only, confirm)
+- 3-4 turns per conversation (average)
+
+**Use Cases:**
+- Quick overview of all multi-turn test scenarios
+- Understanding conversation flow patterns
+- Debugging multi-turn state management
+- Documentation and presentation
+- Training new team members
+
+---
+
 ## Test Categories
 
 ### **1. Functional Tests** (`test_semantic_parser_functional.py`)
@@ -198,6 +240,7 @@ pytest nlp-service/tests/test_semantic_parser_performance.py::TestResponseTime::
 - `TestHallucinationDetection`: Spurious output detection
 - `TestComplexRequests`: Real-world scenarios
 - `TestEdgeCases`: Error handling
+- `TestMultiTurnConversation`: Multi-turn conversation flows (6 scenarios)
 - `TestBatchFunctionalSuite`: Overall accuracy
 
 **Key Assertions:**
