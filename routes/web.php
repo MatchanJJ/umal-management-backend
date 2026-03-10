@@ -58,6 +58,11 @@ Route::middleware(['auth', 'whitelisted'])->group(function () {
         Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
         Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
         
+        // Manual volunteer management
+        Route::post('/events/{id}/volunteers', [EventController::class, 'addVolunteer'])->name('events.volunteers.add');
+        Route::delete('/events/{id}/volunteers/{memberId}', [EventController::class, 'removeVolunteer'])->name('events.volunteers.remove');
+        Route::get('/events/{id}/available-members', [EventController::class, 'getAvailableMembers'])->name('events.volunteers.available');
+        
         // AssignAI API Routes
         Route::prefix('api/assignai')->group(function () {
             Route::post('/chat', [AssignAIController::class, 'chat'])->name('assignai.chat');
@@ -76,9 +81,7 @@ Route::middleware(['auth', 'whitelisted'])->group(function () {
     
     // Whitelist management - Admin only
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [App\Http\Controllers\AdminDashboardController::class, 'index'])->name('dashboard');
         
         Route::get('/fairness-report', function () {
             return view('admin.fairness-report');
