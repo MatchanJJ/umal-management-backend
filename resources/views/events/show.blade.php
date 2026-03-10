@@ -4,8 +4,11 @@
 
 @section('content')
 <div
-    x-data="assignAIChat({{ $event->id }}, {{ $event->required_volunteers }})"
-    @keydown.escape.window="panelOpen = false"
+    x-data="{
+        ...assignAIChat({{ $event->id }}, {{ $event->required_volunteers }}),
+        ...volunteerManagement()
+    }"
+    @keydown.escape.window="panelOpen = false; memberModalOpen = false"
     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
     <!-- Header -->
@@ -112,9 +115,21 @@
 
     <!-- Assigned Volunteers -->
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Assigned Volunteers</h3>
-            <p class="mt-1 text-sm text-gray-600">{{ $event->volunteerAssignments->count() }} volunteer(s) assigned</p>
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-start">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Assigned Volunteers</h3>
+                <p class="mt-1 text-sm text-gray-600">{{ $event->volunteerAssignments->count() }} volunteer(s) assigned</p>
+            </div>
+            @if(auth()->user()->role && in_array(auth()->user()->role->name, ['admin', 'adviser']))
+            <button @click="openMemberModal()"
+                    type="button"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Volunteer
+            </button>
+            @endif
         </div>
         <div class="border-t border-gray-200">
             @if($event->volunteerAssignments->isNotEmpty())
@@ -122,7 +137,7 @@
                 @foreach($event->volunteerAssignments as $assignment)
                 <li class="px-4 py-4 sm:px-6">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center">
+                        <div class="flex items-center flex-1">
                             <div class="flex-shrink-0">
                                 <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                                     <span class="text-blue-600 font-medium text-sm">
@@ -130,7 +145,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="ml-4">
+                            <div class="ml-4 flex-1">
                                 <div class="text-sm font-medium text-gray-900">
                                     {{ $assignment->member->first_name }} {{ $assignment->member->last_name }}
                                 </div>
@@ -139,8 +154,20 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="text-sm text-gray-500">
-                            Assigned {{ $assignment->assigned_at->diffForHumans() }}
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-500">
+                                Assigned {{ $assignment->assigned_at->diffForHumans() }}
+                            </div>
+                            @if(auth()->user()->role && in_array(auth()->user()->role->name, ['admin', 'adviser']))
+                            <button @click="removeVolunteer({{ $assignment->member->id }}, '{{ $assignment->member->first_name }} {{ $assignment->member->last_name }}')"
+                                    type="button"
+                                    title="Remove volunteer"
+                                    class="inline-flex items-center p-1.5 border border-transparent rounded-md text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                            @endif
                         </div>
                     </div>
                 </li>
@@ -573,7 +600,7 @@
                     .filter(id => !!id);
 
                 if (selectedIds.length === 0) {
-                    alert('Please select at least one volunteer to assign.');
+                    this.showAlert('Please select at least one volunteer to assign.', 'Notice');
                     return;
                 }
 
@@ -664,12 +691,12 @@
                 const availableSlots = this.confirmationData.available_slots;
                 
                 if (selectedIds.length === 0) {
-                    alert('Please select at least one volunteer.');
+                    this.showAlert('Please select at least one volunteer.', 'Notice');
                     return;
                 }
                 
                 if (selectedIds.length > availableSlots) {
-                    alert(`You can only select ${availableSlots} volunteer(s). Currently selected: ${selectedIds.length}`);
+                    this.showAlert(`You can only select ${availableSlots} volunteer(s). Currently selected: ${selectedIds.length}`, 'Notice');
                     return;
                 }
                 
@@ -774,7 +801,7 @@
                                 <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span x-text="assignment.member?.name"></span>
+                                <span x-text="assignment.member ? (assignment.member.first_name + ' ' + assignment.member.last_name) : 'Unknown'"></span>
                             </div>
                         </template>
                     </div>
@@ -806,10 +833,11 @@
     {{-- Overflow Selection Modal --}}
     <div x-show="showOverflowModal"
          x-cloak
+         @click="cancelOverflow()"
          class="fixed inset-0 z-50 flex items-center justify-center p-4"
          style="background-color: rgba(0, 0, 0, 0.5);">
-        <div @click.away="cancelOverflow()"
-             class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 transform transition-all"
+        <div @click.stop
+             class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all"
              x-show="showOverflowModal"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
@@ -834,7 +862,7 @@
             </div>
             
             <div class="mb-4 max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-                <template x-if="confirmationData?.recommendations">
+                <template x-if="confirmationData?.recommendations && confirmationData.recommendations.length > 0">
                     <div class="divide-y divide-gray-200">
                         <template x-for="rec in confirmationData.recommendations" :key="rec.member_id">
                             <label class="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors">
@@ -844,7 +872,7 @@
                                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-sm font-medium text-gray-900" x-text="rec.name"></span>
+                                        <span class="text-sm font-medium text-gray-900" x-text="rec.full_name || rec.name || 'Member #' + rec.member_id"></span>
                                         <span class="text-xs font-bold"
                                               :class="(rec.assignment_probability || 0) >= 0.7 ? 'text-green-600' : (rec.assignment_probability || 0) >= 0.4 ? 'text-amber-600' : 'text-gray-500'"
                                               x-text="Math.round((rec.assignment_probability || 0) * 100) + '%'"></span>
@@ -852,12 +880,17 @@
                                     <div class="flex items-center gap-2 mt-0.5">
                                         <span class="text-xs text-gray-500" x-text="rec.college || ''"></span>
                                         <template x-if="rec.has_class_conflict == 1">
-                                            <span class="text-xs text-amber-600">? Class conflict</span>
+                                            <span class="text-xs text-amber-600">⚠ Class conflict</span>
                                         </template>
                                     </div>
                                 </div>
                             </label>
                         </template>
+                    </div>
+                </template>
+                <template x-if="!confirmationData?.recommendations || confirmationData.recommendations.length === 0">
+                    <div class="p-4 text-center text-gray-500 text-sm">
+                        No recommendations available
                     </div>
                 </template>
             </div>
@@ -884,6 +917,108 @@
         </div>
     </div>
 
+    {{-- Member Selection Modal for Manual Assignment --}}
+    <div x-show="memberModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background-color: rgba(0, 0, 0, 0.5);">
+        <div @click="memberModalOpen = false" class="fixed inset-0 -z-10" aria-hidden="true"></div>
+
+        <div x-show="memberModalOpen"
+             @click.stop
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="bg-white rounded-lg shadow-xl transform transition-all w-full max-w-md relative z-10">
+                
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Add Volunteer</h3>
+                        <button @click="memberModalOpen = false" class="text-gray-400 hover:text-gray-500">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="mb-4">
+                        <input 
+                            type="text"
+                            x-model="memberSearch"
+                            @input="searchMembers()"
+                            placeholder="Search by name, email, or student number..."
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+
+                    <!-- Loading State -->
+                    <div x-show="loadingMembers" class="text-center py-8">
+                        <svg class="animate-spin h-8 w-8 mx-auto text-blue-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">Loading members...</p>
+                    </div>
+
+                    <!-- Members List -->
+                    <div x-show="!loadingMembers" class="max-h-96 overflow-y-auto border border-gray-200 rounded-md">
+                        <template x-if="filteredMembers.length === 0">
+                            <div class="text-center py-8 text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <p class="mt-2 text-sm">No available members found</p>
+                            </div>
+                        </template>
+                        
+                        <ul class="divide-y divide-gray-200">
+                            <template x-for="member in filteredMembers" :key="member.id">
+                                <li class="px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                                    @click="selectMemberToAdd(member)">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center min-w-0 flex-1">
+                                            <div class="flex-shrink-0">
+                                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <span class="text-blue-600 font-medium text-sm" x-text="member.first_name.charAt(0) + member.last_name.charAt(0)"></span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-3 min-w-0 flex-1">
+                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                    <span x-text="member.first_name + ' ' + member.last_name"></span>
+                                                </p>
+                                                <p class="text-sm text-gray-500 truncate" x-text="member.email"></p>
+                                                <p class="text-xs text-gray-400" x-text="member.student_number"></p>
+                                            </div>
+                                        </div>
+                                        <div class="ml-3 flex-shrink-0">
+                                            <button 
+                                                type="button"
+                                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                                                Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="memberModalOpen = false"
+                            type="button"
+                            class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm">
+                        Close
+                    </button>
+                </div>
+        </div>
+    </div>
+
+
+
     @endif
 
     {{-- �"��"��"� Alpine.js Component Logic �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"� --}}
@@ -909,6 +1044,21 @@
             overflowSelectedMembers: {},
             overflowError: '',
             overrideError: '',
+            showAlertModal: false,
+            alertMessage: '',
+            alertTitle: '',
+
+            showAlert(message, title = 'Notice') {
+                this.alertTitle = title;
+                this.alertMessage = message;
+                this.showAlertModal = true;
+            },
+
+            closeAlertModal() {
+                this.showAlertModal = false;
+                this.alertMessage = '';
+                this.alertTitle = '';
+            },
 
             csrfToken() {
                 return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
@@ -1025,7 +1175,7 @@
                     .filter(id => !!id);
 
                 if (selectedIds.length === 0) {
-                    alert('Please select at least one volunteer to assign.');
+                    this.showAlert('Please select at least one volunteer to assign.', 'Notice');
                     return;
                 }
 
@@ -1257,7 +1407,305 @@
             },
         };
     }
+
+    function volunteerManagement() {
+        return {
+            memberModalOpen: false,
+            availableMembers: [],
+            filteredMembers: [],
+            memberSearch: '',
+            loadingMembers: false,
+            addingVolunteer: false,
+            removingVolunteer: false,
+            showAlertModal: false,
+            alertMessage: '',
+            alertTitle: '',
+            showConfirmModal: false,
+            confirmMessage: '',
+            confirmCallback: null,
+            showFullyStaffedModal: false,
+            
+            showAlert(message, title = 'Notice') {
+                this.alertTitle = title;
+                this.alertMessage = message;
+                this.showAlertModal = true;
+            },
+
+            closeAlertModal() {
+                this.showAlertModal = false;
+                this.alertMessage = '';
+                this.alertTitle = '';
+            },
+
+            showConfirm(message, callback) {
+                this.confirmMessage = message;
+                this.confirmCallback = callback;
+                this.showConfirmModal = true;
+            },
+
+            closeConfirmModal() {
+                this.showConfirmModal = false;
+                this.confirmMessage = '';
+                this.confirmCallback = null;
+            },
+
+            async confirmAction() {
+                if (this.confirmCallback) {
+                    await this.confirmCallback();
+                }
+                this.closeConfirmModal();
+            },
+            
+            csrfToken() {
+                return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            },
+
+            async openMemberModal() {
+                // Check if event is fully staffed
+                const currentAssigned = {{ $event->assigned_volunteers }};
+                const required = {{ $event->required_volunteers }};
+                
+                if (currentAssigned >= required) {
+                    this.showFullyStaffedModal = true;
+                    return;
+                }
+                
+                this.memberModalOpen = true;
+                this.memberSearch = '';
+                await this.fetchAvailableMembers();
+            },
+
+            async fetchAvailableMembers() {
+                this.loadingMembers = true;
+                try {
+                    const response = await fetch(`/events/{{ $event->id }}/available-members`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken()
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        this.availableMembers = data.members;
+                        this.filteredMembers = data.members;
+                    } else {
+                        this.showAlert('Failed to load members', 'Error');
+                    }
+                } catch (error) {
+                    console.error('Error fetching members:', error);
+                    this.showAlert('Failed to load members', 'Error');
+                } finally {
+                    this.loadingMembers = false;
+                }
+            },
+
+            searchMembers() {
+                const search = this.memberSearch.toLowerCase().trim();
+                if (!search) {
+                    this.filteredMembers = this.availableMembers;
+                    return;
+                }
+                
+                this.filteredMembers = this.availableMembers.filter(member => {
+                    const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
+                    const email = member.email.toLowerCase();
+                    const studentNumber = member.student_number?.toLowerCase() || '';
+                    return fullName.includes(search) || email.includes(search) || studentNumber.includes(search);
+                });
+            },
+
+            async selectMemberToAdd(member) {
+                await this.addVolunteerToEvent(member.id);
+            },
+
+            async addVolunteerToEvent(memberId) {
+                if (this.addingVolunteer) return;
+                
+                this.addingVolunteer = true;
+                try {
+                    const response = await fetch(`/events/{{ $event->id }}/volunteers`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken()
+                        },
+                        body: JSON.stringify({ 
+                            member_id: memberId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Success - reload the page to show updated volunteer list
+                        window.location.reload();
+                    } else {
+                        this.showAlert(data.message || 'Failed to add volunteer', 'Error');
+                        this.addingVolunteer = false;
+                    }
+                } catch (error) {
+                    console.error('Error adding volunteer:', error);
+                    this.showAlert('Failed to add volunteer', 'Error');
+                    this.addingVolunteer = false;
+                }
+            },
+
+            async removeVolunteer(memberId, memberName) {
+                if (this.removingVolunteer) return;
+                
+                this.showConfirm(
+                    `Are you sure you want to remove ${memberName} from this event?`,
+                    async () => {
+                        this.removingVolunteer = true;
+                        try {
+                            const response = await fetch(`/events/{{ $event->id }}/volunteers/${memberId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': this.csrfToken()
+                                }
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                // Success - reload the page to show updated volunteer list
+                                window.location.reload();
+                            } else {
+                                this.showAlert(data.message || 'Failed to remove volunteer', 'Error');
+                            }
+                        } catch (error) {
+                            console.error('Error removing volunteer:', error);
+                            this.showAlert('Failed to remove volunteer', 'Error');
+                        } finally {
+                            this.removingVolunteer = false;
+                        }
+                    }
+                );
+            }
+        };
+    }
     </script>
+
+    {{-- Alert Modal --}}
+    <div x-show="showAlertModal"
+         x-cloak
+         @click="closeAlertModal()"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background-color: rgba(0, 0, 0, 0.5);">
+        <div @click.stop
+             class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+             x-show="showAlertModal"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <div class="flex items-start gap-3 mb-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900" x-text="alertTitle"></h3>
+                    <p class="mt-2 text-sm text-gray-600" x-text="alertMessage"></p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button @click="closeAlertModal()"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Confirm Modal --}}
+    <div x-show="showConfirmModal"
+         x-cloak
+         @click="closeConfirmModal()"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background-color: rgba(0, 0, 0, 0.5);">
+        <div @click.stop
+             class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+             x-show="showConfirmModal"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <div class="flex items-start gap-3 mb-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">Confirm Action</h3>
+                    <p class="mt-2 text-sm text-gray-600" x-text="confirmMessage"></p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 justify-end">
+                <button @click="closeConfirmModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button @click="confirmAction()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Fully Staffed Modal --}}
+    <div x-show="showFullyStaffedModal"
+         x-cloak
+         @click="showFullyStaffedModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background-color: rgba(0, 0, 0, 0.5);">
+        <div @click.stop
+             class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+             x-show="showFullyStaffedModal"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <div class="flex items-start gap-3 mb-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">Event Fully Staffed</h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        This event has reached its volunteer capacity ({{ $event->assigned_volunteers }}/{{ $event->required_volunteers }} volunteers).
+                        Please remove an existing volunteer first if you want to add a new one.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button @click="showFullyStaffedModal = false"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>
 @endsection

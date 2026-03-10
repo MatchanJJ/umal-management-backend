@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Member;
+use App\Models\VolunteerAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -222,5 +224,143 @@ class EventController extends Controller
                 'error' => 'Failed to delete event: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Add a volunteer to an event (manual assignment)
+     */
+    public function addVolunteer(Request $request, $id)
+    {
+        $event = Event::findOrFail($id);
+
+        $validated = $request->validate([
+            'member_id' => 'required|integer|exists:members,id',
+            'force' => 'nullable|boolean'
+        ]);
+
+        $memberId = $validated['member_id'];
+        $force = $validated['force'] ?? false;
+
+        // Check if member is already assigned
+        $existingAssignment = VolunteerAssignment::where('event_id', $id)
+            ->where('member_id', $memberId)
+            ->first();
+
+        if ($existingAssignment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This volunteer is already assigned to this event.'
+            ], 422);
+        }
+
+        // Check if event is already fully staffed
+        $currentCount = $event->volunteerAssignments()->count();
+        if ($currentCount >= $event->required_volunteers) {
+            return response()->json([
+                'success' => false,
+                'message' => "This event is already fully staffed ({$currentCount}/{$event->required_volunteers} volunteers). Please remove a volunteer first before adding a new one."
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Create the assignment
+            $assignment = VolunteerAssignment::create([
+                'event_id' => $id,
+                'member_id' => $memberId,
+                'assigned_by' => auth()->id(),
+            ]);
+
+            // Update assigned count
+            $event->assigned_volunteers = $event->volunteerAssignments()->count();
+            $event->save();
+
+            DB::commit();
+
+            // Load member relationship
+            $assignment->load('member');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Volunteer added successfully.',
+                'assignment' => $assignment,
+                'event' => $event->fresh()->load('volunteerAssignments.member')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add volunteer: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove a volunteer from an event
+     */
+    public function removeVolunteer($id, $memberId)
+    {
+        $event = Event::findOrFail($id);
+
+        $assignment = VolunteerAssignment::where('event_id', $id)
+            ->where('member_id', $memberId)
+            ->first();
+
+        if (!$assignment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Volunteer assignment not found.'
+            ], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            $assignment->delete();
+
+            // Update assigned count
+            $event->assigned_volunteers = $event->volunteerAssignments()->count();
+            $event->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Volunteer removed successfully.',
+                'event' => $event->fresh()->load('volunteerAssignments.member')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove volunteer: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available members for manual assignment (not currently assigned to this event)
+     */
+    public function getAvailableMembers($id)
+    {
+        $event = Event::findOrFail($id);
+
+        // Get members who are not already assigned to this event
+        $assignedMemberIds = VolunteerAssignment::where('event_id', $id)
+            ->pluck('member_id')
+            ->toArray();
+
+        $members = Member::with(['college', 'course'])
+            ->whereHas('role', fn($q) => $q->where('name', 'member'))
+            ->whereNotIn('id', $assignedMemberIds)
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'members' => $members
+        ]);
     }
 }

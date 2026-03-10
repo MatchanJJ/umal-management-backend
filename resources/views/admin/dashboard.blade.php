@@ -86,15 +86,15 @@
         <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
                 <div class="text-center">
-                    <p class="text-3xl font-semibold text-blue-600">-</p>
+                    <p class="text-3xl font-semibold text-blue-600">{{ $totalEvents }}</p>
                     <p class="mt-1 text-sm text-gray-500">Total Events</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-3xl font-semibold text-green-600">-</p>
+                    <p class="text-3xl font-semibold text-green-600">{{ $activeMembers }}</p>
                     <p class="mt-1 text-sm text-gray-500">Active Members</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-3xl font-semibold text-yellow-600">-</p>
+                    <p class="text-3xl font-semibold text-yellow-600">{{ $pendingApprovals }}</p>
                     <p class="mt-1 text-sm text-gray-500">Pending Approvals</p>
                 </div>
             </div>
