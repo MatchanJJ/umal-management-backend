@@ -9,7 +9,8 @@ param(
     [switch]$Performance,
     [switch]$GenerateReport,
     [switch]$Verbose,
-    [switch]$Coverage
+    [switch]$Coverage,
+    [switch]$Visualize
 )
 
 # Colors for output
@@ -140,6 +141,26 @@ if ($GenerateReport) {
         }
     } catch {
         Write-Status ("Failed to generate reports: $_") 'warning'
+    }
+}
+
+# Generate visualizations
+if ($Visualize) {
+    Write-Host ""
+    Write-Status "Generating multi-turn conversation visualizations..." 'info'
+    
+    try {
+        $visualizeScript = Join-Path $nlp_service_path "tests" "visualize_multiturn.py"
+        & python $visualizeScript
+        Write-Status "Visualizations generated successfully" 'success'
+        
+        $overview_chart = Join-Path $nlp_service_path "tests" "multiturn_overview.png"
+        if (Test-Path $overview_chart) {
+            Write-Status "Opening overview chart..." 'info'
+            Start-Process $overview_chart
+        }
+    } catch {
+        Write-Status ("Failed to generate visualizations: $_") 'warning'
     }
 }
 
