@@ -1,6 +1,6 @@
 # AssignAI NLP Service - Testing & Evaluation Report
 
-**Generated:** 2026-03-02 23:01:01
+**Generated:** 2026-03-10 15:28:31
 
 ---
 
@@ -35,13 +35,13 @@ FUNCTIONAL TESTING
 PERFORMANCE EVALUATION
 ----------------------------------------------------------------------
   Response Time (Latency)
-    • Minimum:          110.72 ms
-    • Median (P50):     329.075 ms
-    • Mean:             381.0125 ms
-    • P95:              720.17 ms
-    • P99:              832.4 ms
-    • Maximum:          832.4 ms
-    • Std Deviation:    174.4656089474145 ms
+    • Minimum:          101.18 ms
+    • Median (P50):     298.98 ms
+    • Mean:             348.22096153846155 ms
+    • P95:              644.52 ms
+    • P99:              832.34 ms
+    • Maximum:          832.34 ms
+    • Std Deviation:    175.69223902039184 ms
 
   Throughput
     • Total Requests:   58
@@ -65,12 +65,12 @@ Response Time Analysis (milliseconds)
 ----------------------------------------------------------------------
 Metric                    Value (ms)     Target (ms)          Status
 --------------------------------------------------------------------
-Minimum                        110.7               -              OK
-P50 (Median)                   329.1             300          [HIGH]
-Mean                           381.0             400          [PASS]
-P95                            720.2             800          [PASS]
-P99                            832.4            1500          [PASS]
-Maximum                        832.4            3000          [PASS]
+Minimum                        101.2               -              OK
+P50 (Median)                   299.0             300          [PASS]
+Mean                           348.2             400          [PASS]
+P95                            644.5             800          [PASS]
+P99                            832.3            1500          [PASS]
+Maximum                        832.3            3000          [PASS]
 
 
 TOKEN USAGE ANALYSIS

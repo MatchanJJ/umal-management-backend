@@ -93,8 +93,9 @@ class ChartGenerator:
             return ""
         
         perf = metrics['performance']
+        # P50 is the same as median, so use median_ms as fallback
         latencies = [
-            perf.get('p50_ms', 0),
+            perf.get('p50_ms', perf.get('median_ms', 0)),
             perf.get('p95_ms', 0),
             perf.get('p99_ms', 0)
         ]

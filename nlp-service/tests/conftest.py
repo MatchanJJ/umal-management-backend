@@ -65,6 +65,14 @@ def semantic_parser():
         parser = SemanticParser()
         parser_type = "T5-fine-tuned" if parser.is_fine_tuned else "Fallback ConstraintParser"
         logger.info(f"Parser initialized. Type: {parser_type}")
+        
+        # Ensure T5 model is loaded, not fallback
+        if not parser.is_fine_tuned:
+            raise RuntimeError(
+                "T5 model failed to load. Tests require T5-fine-tuned model. "
+                "Ensure dependencies are installed: pip install torch transformers sentence-transformers"
+            )
+        
         yield parser
     except Exception as e:
         logger.error(f"Failed to initialize parser: {e}")
