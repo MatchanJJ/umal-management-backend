@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
   },
   ...(isDev
     ? {
+        // trailingSlash would 308 /api/x → /api/x/ before the proxy runs.
+        skipTrailingSlashRedirect: true,
         async rewrites() {
           return [{ source: "/api/:path*", destination: "http://localhost:8788/api/:path*" }];
         },

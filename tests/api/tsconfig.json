@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["esnext"],
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types"],
+    "incremental": false
+  },
+  "include": ["./**/*.ts", "../../server/**/*.ts", "../../shared/**/*.ts"],
+  "exclude": []
+}
