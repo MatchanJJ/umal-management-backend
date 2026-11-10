@@ -17,6 +17,7 @@ export type ErrorCode =
   | 'DOMAIN_NOT_ALLOWED'
   | 'LAST_ADVISER'
   | 'SHIFT_HAS_ASSIGNMENTS'
+  | 'STUDENT_NUMBER_TAKEN'
   | 'INTERNAL';
 
 export type ErrorBody = { error: { code: ErrorCode; message: string; details?: unknown } };

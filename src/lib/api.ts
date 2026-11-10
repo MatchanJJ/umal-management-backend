@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hc, type InferRequestType } from 'hono/client';
 import type { AppType } from '../../server/app';
-import type { AccessRequestDTO, BulkAccessResult, MeResponse, Paged } from '../../shared/api';
+import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged } from '../../shared/api';
+import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
 import type { AccessStatus, Role } from '../../shared/enums';
 
 export const client = hc<AppType>('/', { init: { credentials: 'same-origin' } });
@@ -106,5 +107,30 @@ export function useBulkApprove() {
     mutationFn: async (json: BulkInput) =>
       unwrap<BulkAccessResult>(await client.api['access-requests'].bulk.$post({ json })),
     onSuccess: invalidate,
+  });
+}
+
+// ── Catalog + own profile ─────────────────────────────────────────────────
+export function useCatalog() {
+  return useQuery({
+    queryKey: ['catalog'],
+    queryFn: async () => unwrap<CatalogResponse>(await client.api.catalog.$get()),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useOnboard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (json: OnboardingInput) => unwrap<MemberDTO>(await client.api.me.onboarding.$post({ json })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
+  });
+}
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (json: ProfileInput) => unwrap<MemberDTO>(await client.api.me.profile.$patch({ json })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
   });
 }

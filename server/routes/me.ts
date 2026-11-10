@@ -1,13 +1,16 @@
 import { and, eq } from 'drizzle-orm';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import type { MeResponse, MemberDTO, TermDTO } from '../../shared/api';
+import { OnboardingInput, ProfileInput } from '../../shared/profile';
 import { createAuth } from '../auth';
 import * as schema from '../db/schema';
 import { getDb } from '../db/client';
 import type { AppEnv } from '../env';
 import { apiError } from '../errors';
-import { requireMember } from '../middleware/auth';
+import { requireApproved, requireMember, requireSession } from '../middleware/auth';
 import { isBootstrapAdviser, rerequestAt, type MemberRow } from '../services/access';
+import { auditInsert } from '../services/audit';
+import { validate } from '../validate';
 
 export function toMemberDTO(m: MemberRow): MemberDTO {
   return {
@@ -68,5 +71,44 @@ export const me = new Hono<AppEnv>().get('/', async (c) => {
   };
   return c.json(body);
 })
+  .post('/onboarding', requireSession, requireApproved, validate('json', OnboardingInput), async (c) =>
+    saveProfile(c, c.req.valid('json'), true),
+  )
+  .patch('/profile', ...requireMember, validate('json', ProfileInput), async (c) => saveProfile(c, c.req.valid('json'), false))
   // Stub with its final guard (Task 1.3). Task 4.3 implements the member's own assignments.
   .get('/assignments', ...requireMember, (c) => c.json({ stub: true }));
+
+/** Writes the caller's own profile (FR-5). Role and email are never accepted here (schemas are strict). */
+async function saveProfile(c: Context<AppEnv>, input: ProfileInput, onboard: boolean) {
+  const actor = c.get('member')!;
+  const db = getDb(c.env);
+  const current = (await db.select().from(schema.members).where(eq(schema.members.id, actor.id)).get())!;
+
+  // Schema §9 rule 5: the course must belong to the college (checked against the merged result).
+  const collegeId = input.collegeId ?? current.collegeId;
+  const courseId = input.courseId === undefined ? current.courseId : input.courseId;
+  if (courseId !== null) {
+    const course = await db
+      .select({ id: schema.courses.id })
+      .from(schema.courses)
+      .where(and(eq(schema.courses.id, courseId), eq(schema.courses.collegeId, collegeId ?? -1), eq(schema.courses.active, true)))
+      .get();
+    if (!course) return apiError(c, 422, 'VALIDATION', 'Pick a course from the selected college', { field: 'courseId' });
+  }
+
+  const now = new Date().toISOString();
+  const set = { ...input, updatedAt: now, ...(onboard && !current.onboardedAt ? { onboardedAt: now } : {}) };
+  try {
+    await db.batch([
+      db.update(schema.members).set(set).where(eq(schema.members.id, actor.id)),
+      ...(onboard ? [auditInsert(db, actor.id, 'member.onboard', 'member', actor.id)] : []),
+    ]);
+  } catch (e) {
+    if (String((e as Error)?.cause ?? e).includes('members.student_number')) {
+      return apiError(c, 409, 'STUDENT_NUMBER_TAKEN', 'Already registered, contact an adviser', { field: 'studentNumber' });
+    }
+    throw e;
+  }
+  const saved = (await db.select().from(schema.members).where(eq(schema.members.id, actor.id)).get())!;
+  return c.json(toMemberDTO(saved));
+}

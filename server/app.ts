@@ -4,6 +4,7 @@ import { createAuth } from './auth';
 import type { AppEnv } from './env';
 import { apiError } from './errors';
 import { accessRequests } from './routes/access';
+import { catalog } from './routes/catalog';
 import { events } from './routes/events';
 import { me } from './routes/me';
 import { members } from './routes/members';
@@ -31,6 +32,7 @@ export const routes = app
   })
   .route('/me', me)
   .route('/access-requests', accessRequests)
+  .route('/catalog', catalog)
   .route('/members', members)
   .route('/events', events)
   .route('/settings', settings)
