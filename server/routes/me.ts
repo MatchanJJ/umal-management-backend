@@ -7,7 +7,7 @@ import { getDb } from '../db/client';
 import type { AppEnv } from '../env';
 import { apiError } from '../errors';
 import { requireMember } from '../middleware/auth';
-import { isBootstrapAdviser, type MemberRow } from '../services/access';
+import { isBootstrapAdviser, rerequestAt, type MemberRow } from '../services/access';
 
 export function toMemberDTO(m: MemberRow): MemberDTO {
   return {
@@ -60,6 +60,7 @@ export const me = new Hono<AppEnv>().get('/', async (c) => {
   const body: MeResponse = {
     user: { id: user.id, email: user.email, name: user.name, image: user.image ?? null },
     accessStatus,
+    accessRerequestAt: accessStatus === 'rejected' ? rerequestAt(request?.decidedAt ?? null) : null,
     onboarded: !!member?.onboardedAt,
     member: member ? toMemberDTO(member) : null,
     activeTerm: activeTerm ? toTermDTO(activeTerm) : null,

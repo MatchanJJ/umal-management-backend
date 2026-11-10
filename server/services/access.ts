@@ -60,13 +60,37 @@ export async function resolveAccess(
       .onConflictDoNothing();
     return { status: 'pending' };
   }
-  if (req.status !== 'approved') return { status: req.status };
+  if (req.status === 'rejected') {
+    if (!canRerequest(req.decidedAt)) return { status: 'rejected' };
+    // FR-6: after the cool-down, signing in again reopens the request.
+    await db
+      .update(ar)
+      .set({ status: 'pending', source: 'sign_in', decidedBy: null, decidedAt: null })
+      .where(eq(ar.id, req.id));
+    return { status: 'pending' };
+  }
+  if (req.status === 'pending') return { status: 'pending' };
 
   const member = await ensureMember(db, addr, req.role);
   return member ? { status: 'approved', member } : { status: 'approved' };
 }
 
-async function ensureMember(db: Db, email: string, role: MemberRow['role']): Promise<MemberRow | undefined> {
+/** FR-6: a rejected email can request access again this many days after the decision. */
+export const REREQUEST_DAYS = 7;
+
+/** Earliest ISO time a rejected request can be re-opened, or null when unknown. */
+export function rerequestAt(decidedAt: string | null): string | null {
+  if (!decidedAt) return null;
+  return new Date(Date.parse(decidedAt) + REREQUEST_DAYS * 86_400_000).toISOString();
+}
+
+function canRerequest(decidedAt: string | null, now = Date.now()): boolean {
+  const at = rerequestAt(decidedAt);
+  return at !== null && Date.parse(at) <= now;
+}
+
+/** Creates the members row for an approved email if its auth user exists (idempotent). */
+export async function ensureMember(db: Db, email: string, role: MemberRow['role']): Promise<MemberRow | undefined> {
   const m = schema.members;
   const existing = await db.select().from(m).where(eq(m.email, email)).get();
   if (existing) return existing;

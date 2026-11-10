@@ -7,7 +7,7 @@ export default defineConfig(async () => {
     test: {
       projects: [
         {
-          test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts'], environment: 'node' },
+          test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts', 'tests/unit/**/*.test.ts'], environment: 'node' },
         },
         {
           plugins: [
