@@ -6,6 +6,7 @@ import * as schema from '../db/schema';
 import { getDb } from '../db/client';
 import type { AppEnv } from '../env';
 import { apiError } from '../errors';
+import { requireMember } from '../middleware/auth';
 import { isBootstrapAdviser, type MemberRow } from '../services/access';
 
 export function toMemberDTO(m: MemberRow): MemberDTO {
@@ -65,4 +66,6 @@ export const me = new Hono<AppEnv>().get('/', async (c) => {
     scheduleSubmitted,
   };
   return c.json(body);
-});
+})
+  // Stub with its final guard (Task 1.3). Task 4.3 implements the member's own assignments.
+  .get('/assignments', ...requireMember, (c) => c.json({ stub: true }));

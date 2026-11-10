@@ -3,7 +3,12 @@ import { ZodError } from 'zod';
 import { createAuth } from './auth';
 import type { AppEnv } from './env';
 import { apiError } from './errors';
+import { accessRequests } from './routes/access';
+import { events } from './routes/events';
 import { me } from './routes/me';
+import { members } from './routes/members';
+import { reports } from './routes/reports';
+import { settings } from './routes/settings';
 
 export const app = new Hono<AppEnv>().basePath('/api');
 
@@ -24,6 +29,11 @@ export const routes = app
     const row = await c.env.DB.prepare('SELECT 1 AS one').first<{ one: number }>();
     return c.json({ ok: true, db: row?.one === 1 });
   })
-  .route('/me', me);
+  .route('/me', me)
+  .route('/access-requests', accessRequests)
+  .route('/members', members)
+  .route('/events', events)
+  .route('/settings', settings)
+  .route('/reports', reports);
 
 export type AppType = typeof routes;

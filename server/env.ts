@@ -23,6 +23,10 @@ export type MemberCtx = {
   role: Role;
   status: 'active' | 'inactive';
   email: string;
+  onboarded: boolean;
 };
 
-export type AppEnv = { Bindings: Env; Variables: { member?: MemberCtx } };
+/** The signed-in Better Auth user, set by `requireSession`. */
+export type AuthUser = { id: string; email: string; name: string; image: string | null };
+
+export type AppEnv = { Bindings: Env; Variables: { member?: MemberCtx; authUser?: AuthUser } };
