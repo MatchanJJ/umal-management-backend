@@ -8,7 +8,7 @@
     "build": "next build",
     "preview": "next build && wrangler pages dev out --port 8788",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tests/api",
+    "typecheck": "next typegen && tsc --noEmit && tsc --noEmit -p tests/api",
     "test": "vitest run"
   },
   "dependencies": {
