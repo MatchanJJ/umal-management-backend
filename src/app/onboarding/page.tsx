@@ -32,10 +32,7 @@ function OnboardingForm({ me }: { me: MeResponse }) {
         router.replace('/me/schedule/');
       },
       onError: (e) => {
-        if (applyServerError(form, e)) {
-          // The student number lives on step 1.
-          if (form.formState.errors.studentNumber) setStep(0);
-        } else toast.error(e.message);
+        if (!applyServerError(form, e)) toast.error(e.message);
       },
     }),
   );

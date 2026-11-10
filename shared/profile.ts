@@ -1,12 +1,19 @@
 import { z } from 'zod';
 import { GENDERS, TSHIRT_SIZES } from './enums';
 
-/** FR-5 onboarding fields with the Backend Schema §4 checks. `.strict()` keeps role/email out of self-edits. */
+/**
+ * UM student emails end in the 6-digit ID number: `m.palma.546616@umindanao.edu.ph` → `546616`.
+ * Anything else (advisers, the bootstrap Gmail) has no student number.
+ */
+export function studentNumberFromEmail(email: string): string | null {
+  return /\.(\d{6})@umindanao\.edu\.ph$/i.exec(email.trim())?.[1] ?? null;
+}
+
+/** FR-5 onboarding fields (student number is derived from the email, never sent) with the Backend Schema §4 checks. `.strict()` keeps role/email out of self-edits. */
 export const OnboardingInput = z
   .object({
     firstName: z.string().trim().min(1).max(60),
     lastName: z.string().trim().min(1).max(60),
-    studentNumber: z.string().trim().regex(/^[A-Za-z0-9-]{3,20}$/, 'Use 3–20 letters, digits or dashes'),
     gender: z.enum(GENDERS),
     collegeId: z.number().int().positive(),
     // Optional while a college has no courses yet; advisers add courses after launch.

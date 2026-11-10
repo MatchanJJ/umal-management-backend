@@ -10,7 +10,7 @@ import type { CatalogResponse, OnboardingInput } from '../../../shared/profile';
 
 type Form = UseFormReturn<OnboardingInput>;
 
-export const PERSONAL_FIELDS = ['firstName', 'lastName', 'studentNumber', 'gender', 'batchYear', 'heightCm', 'tshirtSize'] as const;
+export const PERSONAL_FIELDS = ['firstName', 'lastName', 'gender', 'batchYear', 'heightCm', 'tshirtSize'] as const;
 export const ACADEMIC_FIELDS = ['collegeId', 'courseId', 'yearLevel'] as const;
 
 function Req() {
@@ -99,7 +99,6 @@ export function PersonalFields({ form }: { form: Form }) {
     <FieldGroup className="grid gap-4 sm:grid-cols-2">
       <TextField form={form} name="firstName" label="First name" autoComplete="given-name" />
       <TextField form={form} name="lastName" label="Last name" autoComplete="family-name" />
-      <TextField form={form} name="studentNumber" label="Student number" inputMode="numeric" />
       <SelectField
         form={form}
         name="gender"

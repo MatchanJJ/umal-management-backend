@@ -18,11 +18,13 @@ beforeAll(async () => {
 });
 
 let seq = 0;
+/** A UM student email: initial.lastname.<6-digit id>@umindanao.edu.ph */
+const umEmail = (id = 546600 + ++seq) => `a.cruz.${id}@umindanao.edu.ph`;
+
 function profile(over: Record<string, unknown> = {}) {
   return {
     firstName: 'Ana',
     lastName: 'Cruz',
-    studentNumber: `5466${String(++seq).padStart(2, '0')}`,
     gender: 'F',
     collegeId: cceId,
     courseId: bscsId,
@@ -42,7 +44,8 @@ function send(method: string, path: string, body: unknown, headers: Headers) {
 
 describe('POST /api/me/onboarding', () => {
   it('onboarding_sets_onboarded_at', async () => {
-    const u = await signIn(env, { onboarded: false });
+    const email = umEmail(546616);
+    const u = await signIn(env, { onboarded: false, email });
     const body = profile();
     const res = await send('POST', '/me/onboarding', body, u.headers);
     expect(res.status).toBe(200);
@@ -50,7 +53,7 @@ describe('POST /api/me/onboarding', () => {
     expect(row).toMatchObject({
       first_name: 'Ana',
       last_name: 'Cruz',
-      student_number: body.studentNumber,
+      student_number: '546616', // derived from the email
       gender: 'F',
       college_id: cceId,
       course_id: bscsId,
@@ -82,13 +85,25 @@ describe('POST /api/me/onboarding', () => {
   });
 
   it('duplicate_student_number_409', async () => {
-    const first = await signIn(env, { onboarded: false });
-    const p = profile();
-    expect((await send('POST', '/me/onboarding', p, first.headers)).status).toBe(200);
-    const second = await signIn(env, { onboarded: false });
-    const res = await send('POST', '/me/onboarding', profile({ studentNumber: p.studentNumber }), second.headers);
+    // Two different emails carrying the same ID number.
+    const first = await signIn(env, { onboarded: false, email: 'a.cruz.777001@umindanao.edu.ph' });
+    expect((await send('POST', '/me/onboarding', profile(), first.headers)).status).toBe(200);
+    const second = await signIn(env, { onboarded: false, email: 'b.reyes.777001@umindanao.edu.ph' });
+    const res = await send('POST', '/me/onboarding', profile(), second.headers);
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ error: { code: 'STUDENT_NUMBER_TAKEN' } });
+  });
+
+  it('email_without_id_number_leaves_student_number_empty', async () => {
+    const u = await signIn(env, { onboarded: false, email: 'prof.santos@umindanao.edu.ph' });
+    expect((await send('POST', '/me/onboarding', profile(), u.headers)).status).toBe(200);
+    expect(await env.DB.prepare('SELECT student_number FROM members WHERE id = ?1').bind(u.memberId).first()).toEqual({ student_number: null });
+  });
+
+  it('student_number_cannot_be_sent_400', async () => {
+    const u = await signIn(env, { onboarded: false, email: umEmail() });
+    const res = await send('POST', '/me/onboarding', profile({ studentNumber: '999999' }), u.headers);
+    expect(res.status).toBe(400);
   });
 
   it('rejects_out_of_range_height_400', async () => {

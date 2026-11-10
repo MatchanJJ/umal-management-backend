@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
 import type { MeResponse, MemberDTO, TermDTO } from '../../shared/api';
-import { OnboardingInput, ProfileInput } from '../../shared/profile';
+import { OnboardingInput, ProfileInput, studentNumberFromEmail } from '../../shared/profile';
 import { createAuth } from '../auth';
 import * as schema from '../db/schema';
 import { getDb } from '../db/client';
@@ -97,7 +97,12 @@ async function saveProfile(c: Context<AppEnv>, input: ProfileInput, onboard: boo
   }
 
   const now = new Date().toISOString();
-  const set = { ...input, updatedAt: now, ...(onboard && !current.onboardedAt ? { onboardedAt: now } : {}) };
+  const set = {
+    ...input,
+    updatedAt: now,
+    ...(onboard ? { studentNumber: studentNumberFromEmail(current.email) } : {}),
+    ...(onboard && !current.onboardedAt ? { onboardedAt: now } : {}),
+  };
   try {
     await db.batch([
       db.update(schema.members).set(set).where(eq(schema.members.id, actor.id)),

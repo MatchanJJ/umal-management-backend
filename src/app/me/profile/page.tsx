@@ -20,7 +20,6 @@ function ProfileForm({ me }: { me: MeResponse }) {
     defaultValues: {
       firstName: m.firstName ?? '',
       lastName: m.lastName ?? '',
-      studentNumber: m.studentNumber ?? '',
       gender: m.gender ?? undefined,
       collegeId: m.collegeId ?? undefined,
       courseId: m.courseId,
@@ -43,7 +42,9 @@ function ProfileForm({ me }: { me: MeResponse }) {
       )}
     >
       <p className="text-sm text-muted-foreground">
-        Signed in as <span className="font-medium text-foreground">{m.email}</span>. Ask an adviser to change your email or role.
+        Signed in as <span className="font-medium text-foreground">{m.email}</span>
+        {m.studentNumber && <> · Student no. <span className="font-medium text-foreground tabular-nums">{m.studentNumber}</span></>}. Ask
+        an adviser to change your email or role.
       </p>
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Personal</h2>
