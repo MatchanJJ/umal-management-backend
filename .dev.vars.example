@@ -1,0 +1,12 @@
+# Copy to .dev.vars for `wrangler pages dev`. Never commit .dev.vars.
+ENV=local
+BETTER_AUTH_SECRET=change-me-32-bytes-min
+BETTER_AUTH_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+BOOTSTRAP_ADVISER_EMAIL=
+GEMINI_API_KEY=
+GEMINI_MODEL=
+GROQ_API_KEY=
+GROQ_MODEL=
+AI_GATEWAY_URL=

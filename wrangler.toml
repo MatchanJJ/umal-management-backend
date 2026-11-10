@@ -1,0 +1,17 @@
+name = "umal-management"
+pages_build_output_dir = "out"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "umal-preview"
+database_id = "71772ede-8cba-4edc-b71c-e1edd61e41c6"
+migrations_dir = "migrations"
+
+[env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "umal-prod"
+database_id = "bb47b6fa-802e-4b6e-8f59-f340253654d9"
+migrations_dir = "migrations"
