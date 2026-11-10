@@ -30,5 +30,11 @@ export const ProfileInput = OnboardingInput.partial().strict();
 export type ProfileInput = z.infer<typeof ProfileInput>;
 
 export type CatalogResponse = {
-  colleges: { id: number; code: string; name: string; courses: { id: number; code: string; name: string }[] }[];
+  colleges: {
+    id: number;
+    code: string;
+    name: string;
+    active: boolean;
+    courses: { id: number; code: string; name: string; active: boolean }[];
+  }[];
 };
