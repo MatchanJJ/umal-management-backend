@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm vitest run
+      - run: pnpm next build
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: out
+          path: out
+          retention-days: 1
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # umal-prod on main, umal-preview everywhere else (wrangler.toml env.production holds prod's binding).
+      DB_NAME: ${{ github.ref_name == 'main' && 'umal-prod' || 'umal-preview' }}
+      WRANGLER_ENV_FLAG: ${{ github.ref_name == 'main' && '--env production' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: out
+          path: out
+      - name: Apply D1 migrations
+        run: |
+          if [ -d migrations ] && ls migrations/*.sql >/dev/null 2>&1; then
+            pnpm exec wrangler d1 migrations apply "$DB_NAME" --remote $WRANGLER_ENV_FLAG
+          else
+            echo "No migrations yet; skipping."
+          fi
+      - name: Deploy to Cloudflare Pages
+        run: pnpm exec wrangler pages deploy out --project-name umal-management --branch "${{ github.ref_name }}"
