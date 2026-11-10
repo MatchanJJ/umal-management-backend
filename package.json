@@ -9,9 +9,13 @@
     "preview": "next build && wrangler pages dev out --port 8788",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit && tsc --noEmit -p tests/api",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:auth-schema": "auth generate --config server/db/auth.config.ts --adapter drizzle --dialect sqlite --output server/db/auth-schema.ts -y",
+    "db:migrate:local": "wrangler d1 migrations apply umal-preview --local"
   },
   "dependencies": {
+    "better-auth": "^1.7.18",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "drizzle-orm": "^0.45.4",
@@ -34,7 +38,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "auth": "^1.7.18",
     "concurrently": "^10.0.7",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
     "tailwindcss": "^4",

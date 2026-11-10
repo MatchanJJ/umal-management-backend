@@ -1,7 +1,8 @@
 type AppBindings = import('../../server/env').Env;
 
 declare namespace Cloudflare {
-  // Bindings seen by `cloudflare:test` `env` match the app's Env.
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- declaration merging needs an empty extends
-  interface Env extends AppBindings {}
+  // Bindings seen by `cloudflare:test` `env`: the app's Env plus test-only bindings.
+  interface Env extends AppBindings {
+    TEST_MIGRATIONS: import('cloudflare:test').D1Migration[];
+  }
 }
