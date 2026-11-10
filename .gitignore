@@ -22,3 +22,8 @@ next-env.d.ts
 playwright-report/
 test-results/
 .DS_Store
+
+# local AI tooling (per-developer)
+.claude/
+/CLAUDE.md
+graphify-out/
