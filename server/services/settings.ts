@@ -1,34 +1,28 @@
 import { eq } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import { SETTINGS_DEFAULTS, type Settings } from '../../shared/settings';
 import * as schema from '../db/schema';
 
 type Db = DrizzleD1Database<typeof schema>;
 
-/** Settings keys and their value types (Backend Schema §6). */
-export type SettingsMap = {
-  'auth.allowedEmailDomain': string | null;
-  'assignment.requireSchedule': boolean;
-  'scoring.weights': { load: number; recency: number; reliability: number };
-  'scoring.loadUnitHours': number;
-  'ai.turnsPerHour': number;
-  'schoolYear.startMonth': number;
-};
+export { SETTINGS_DEFAULTS };
+export type SettingsMap = Settings;
 
-export const SETTINGS_DEFAULTS: SettingsMap = {
-  'auth.allowedEmailDomain': 'umindanao.edu.ph',
-  'assignment.requireSchedule': true,
-  'scoring.weights': { load: 3, recency: 1, reliability: 1 },
-  'scoring.loadUnitHours': 4,
-  'ai.turnsPerHour': 40,
-  'schoolYear.startMonth': 8,
-};
+/** All settings, typed, with Schema §6 defaults for any missing row. */
+export async function getSettings(db: Db): Promise<Settings> {
+  const rows = await db.select().from(schema.settings);
+  const stored = Object.fromEntries(rows.map((r) => [r.key, JSON.parse(r.valueJson)]));
+  return Object.fromEntries(
+    Object.entries(SETTINGS_DEFAULTS).map(([k, v]) => [k, k in stored ? stored[k] : v]),
+  ) as Settings;
+}
 
 /** Reads one setting; falls back to the documented default when the row is missing. */
-export async function getSetting<K extends keyof SettingsMap>(db: Db, key: K): Promise<SettingsMap[K]> {
+export async function getSetting<K extends keyof Settings>(db: Db, key: K): Promise<Settings[K]> {
   const row = await db
     .select({ valueJson: schema.settings.valueJson })
     .from(schema.settings)
     .where(eq(schema.settings.key, key))
     .get();
-  return row ? (JSON.parse(row.valueJson) as SettingsMap[K]) : SETTINGS_DEFAULTS[key];
+  return row ? (JSON.parse(row.valueJson) as Settings[K]) : SETTINGS_DEFAULTS[key];
 }

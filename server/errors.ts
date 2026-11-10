@@ -18,6 +18,7 @@ export type ErrorCode =
   | 'LAST_ADVISER'
   | 'SHIFT_HAS_ASSIGNMENTS'
   | 'STUDENT_NUMBER_TAKEN'
+  | 'CONFLICT'
   | 'INTERNAL';
 
 export type ErrorBody = { error: { code: ErrorCode; message: string; details?: unknown } };

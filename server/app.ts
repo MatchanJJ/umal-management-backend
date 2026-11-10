@@ -10,6 +10,7 @@ import { me } from './routes/me';
 import { members } from './routes/members';
 import { reports } from './routes/reports';
 import { settings } from './routes/settings';
+import { terms } from './routes/terms';
 
 export const app = new Hono<AppEnv>().basePath('/api');
 
@@ -36,6 +37,7 @@ export const routes = app
   .route('/members', members)
   .route('/events', events)
   .route('/settings', settings)
+  .route('/terms', terms)
   .route('/reports', reports);
 
 export type AppType = typeof routes;

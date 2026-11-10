@@ -3,8 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hc, type InferRequestType } from 'hono/client';
 import type { AppType } from '../../server/app';
-import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged } from '../../shared/api';
+import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged, TermDTO } from '../../shared/api';
 import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
+import type { Settings } from '../../shared/settings';
 import type { AccessStatus, Role } from '../../shared/enums';
 
 export const client = hc<AppType>('/', { init: { credentials: 'same-origin' } });
@@ -111,10 +112,11 @@ export function useBulkApprove() {
 }
 
 // ── Catalog + own profile ─────────────────────────────────────────────────
-export function useCatalog() {
+/** Active colleges/courses; `all` (advisers) includes inactive ones. */
+export function useCatalog(all = false) {
   return useQuery({
-    queryKey: ['catalog'],
-    queryFn: async () => unwrap<CatalogResponse>(await client.api.catalog.$get()),
+    queryKey: ['catalog', all],
+    queryFn: async () => unwrap<CatalogResponse>(await client.api.catalog.$get({ query: all ? { all: '1' } : {} })),
     staleTime: 5 * 60_000,
   });
 }
@@ -132,5 +134,70 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (json: ProfileInput) => unwrap<MemberDTO>(await client.api.me.profile.$patch({ json })),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
+  });
+}
+
+// ── Settings: terms, catalog, general (adviser) ───────────────────────────
+export function useTerms() {
+  return useQuery({ queryKey: ['terms'], queryFn: async () => unwrap<TermDTO[]>(await client.api.terms.$get()) });
+}
+
+function useInvalidate(...keys: string[][]) {
+  const qc = useQueryClient();
+  return () => Promise.all(keys.map((queryKey) => qc.invalidateQueries({ queryKey })));
+}
+
+export function useCreateTerm() {
+  const onSuccess = useInvalidate(['terms']);
+  return useMutation({
+    mutationFn: async (json: { name: string; startDate: string; endDate: string }) =>
+      unwrap<TermDTO>(await client.api.terms.$post({ json })),
+    onSuccess,
+  });
+}
+
+export function useActivateTerm() {
+  const onSuccess = useInvalidate(['terms'], ['me']);
+  return useMutation({
+    mutationFn: async (id: number) => unwrap<TermDTO>(await client.api.terms[':id'].activate.$post({ param: { id: String(id) } })),
+    onSuccess,
+  });
+}
+
+export function useSaveCollege() {
+  const onSuccess = useInvalidate(['catalog']);
+  return useMutation({
+    mutationFn: async ({ id, ...json }: { id?: number; code?: string; name?: string; active?: boolean }) =>
+      unwrap(
+        id
+          ? await client.api.catalog.colleges[':id'].$patch({ param: { id: String(id) }, json })
+          : await client.api.catalog.colleges.$post({ json: json as { code: string; name: string } }),
+      ),
+    onSuccess,
+  });
+}
+
+export function useSaveCourse() {
+  const onSuccess = useInvalidate(['catalog']);
+  return useMutation({
+    mutationFn: async ({ id, ...json }: { id?: number; collegeId?: number; code?: string; name?: string; active?: boolean }) =>
+      unwrap(
+        id
+          ? await client.api.catalog.courses[':id'].$patch({ param: { id: String(id) }, json })
+          : await client.api.catalog.courses.$post({ json: json as { collegeId: number; code: string; name: string } }),
+      ),
+    onSuccess,
+  });
+}
+
+export function useSettings() {
+  return useQuery({ queryKey: ['settings'], queryFn: async () => unwrap<Settings>(await client.api.settings.$get()) });
+}
+
+export function useSaveSettings() {
+  const onSuccess = useInvalidate(['settings']);
+  return useMutation({
+    mutationFn: async (json: Partial<Settings>) => unwrap<Settings>(await client.api.settings.$put({ json })),
+    onSuccess,
   });
 }
