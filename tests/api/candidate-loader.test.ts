@@ -260,7 +260,8 @@ describe('loadCandidates', () => {
     const ev = await event(active, adviser, [['2026-09-03T08:00', '2026-09-05T12:00']]);
     const r = await loadCandidates(getDb({ ...env, DB: counting } as Env), ev.eventId);
     expect(r!.facts.length).toBeGreaterThan(0);
-    // 2 (event + shifts) + 9 in one batch; budget is 12 (CLAUDE.md).
-    expect(statements).toBe(11);
+    // 2 (event+term, shifts) + 7 in one batch = 9, leaving room in the 12-statement AI-turn budget for the
+    // session lookup and the two writes (Task 5.3).
+    expect(statements).toBe(9);
   });
 });

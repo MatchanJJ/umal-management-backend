@@ -1,4 +1,4 @@
-// Candidate loader (TRD §8.1, Schema §8.1): two round trips — (event + shifts), then one D1 batch of 9 statements.
+// Candidate loader (TRD §8.1, Schema §8.1): two round trips — (event+term, shifts), then one D1 batch of 7 statements.
 // Raw D1 statements, not drizzle's db.batch: a batched drizzle join silently returned [] in Task 2.3.
 import { SETTINGS_DEFAULTS, type Settings } from '../../shared/settings';
 import { manilaNow } from '../../shared/time';
@@ -7,20 +7,34 @@ import { hoursBetween, schoolYearStart, segments, type AllocateCtx, type Candida
 
 export type EventRow = { id: number; termId: number; title: string; startAt: string; endAt: string; status: string; version: number };
 export type AssignmentRow = { id: number; shiftId: number; memberId: number; status: string; source: string; conflictOverride: number };
-export type Loaded = { event: EventRow; shifts: AllocateCtx[]; facts: CandidateFacts[]; roster: AssignmentRow[] };
+/** `names` are for display only (pick cards); they never reach the engine or the LLM. */
+export type Loaded = {
+  event: EventRow;
+  shifts: AllocateCtx[];
+  facts: CandidateFacts[];
+  roster: AssignmentRow[];
+  names: Map<number, string>;
+  labels: Map<number, string>;
+  totalShifts: number;
+  settings: Settings;
+};
 
-type ShiftRow = { id: number; start_at: string; end_at: string; required_volunteers: number };
+type ShiftRow = { id: number; label: string; start_at: string; end_at: string; required_volunteers: number };
 
 export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?: number[]; shiftIds?: number[] } = {}): Promise<Loaded | null> {
   const D = db.$client;
 
-  // Round trip 1: the event and its active shifts (gives the term and the span to load facts for).
+  // Round trip 1: the event (with its term's dates) and its active shifts.
   const [ev, sh] = await D.batch([
-    D.prepare(`SELECT id, term_id AS termId, title, start_at AS startAt, end_at AS endAt, status, version FROM events WHERE id = ?1`).bind(eventId),
-    D.prepare(`SELECT id, start_at, end_at, required_volunteers FROM shifts WHERE event_id = ?1 AND active = 1 ORDER BY start_at, position`).bind(eventId),
+    D.prepare(
+      `SELECT e.id, e.term_id AS termId, e.title, e.start_at AS startAt, e.end_at AS endAt, e.status, e.version, t.start_date AS termStart, t.end_date AS termEnd
+       FROM events e JOIN terms t ON t.id = e.term_id WHERE e.id = ?1`,
+    ).bind(eventId),
+    D.prepare(`SELECT id, label, start_at, end_at, required_volunteers FROM shifts WHERE event_id = ?1 AND active = 1 ORDER BY start_at, position`).bind(eventId),
   ]);
-  const event = (ev.results as EventRow[])[0];
-  if (!event) return null;
+  const row = (ev.results as (EventRow & { termStart: string; termEnd: string })[])[0];
+  if (!row) return null;
+  const { termStart, termEnd, ...event } = row;
   const targets = (sh.results as ShiftRow[]).filter((s) => !opts.shiftIds || opts.shiftIds.includes(s.id));
 
   const spanStart = targets.reduce((m, s) => (s.start_at < m ? s.start_at : m), targets[0]?.start_at ?? event.startAt);
@@ -32,17 +46,17 @@ export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?
   const memberFilter = opts.memberIds ? JSON.stringify(opts.memberIds) : null;
   const t = event.termId;
 
-  // Round trip 2: one batch (9 statements → 11 total, budget 12).
-  const [term, settings, members, scheds, classes, unav, history, bookings, roster] = await D.batch([
-    D.prepare(`SELECT start_date, end_date FROM terms WHERE id = ?1`).bind(t),
+  // Round trip 2: one batch of 7 → 9 statements total (AI-turn budget is 12; see Task 5.3).
+  const [settings, members, classes, unav, history, bookings, roster] = await D.batch([
     D.prepare(`SELECT key, value_json FROM settings`),
     D.prepare(
-      `SELECT m.id, m.gender, m.year_level, m.batch_year, m.height_cm, c.code AS college_code
+      `SELECT m.id, m.gender, m.year_level, m.batch_year, m.height_cm, c.code AS college_code,
+              TRIM(COALESCE(m.first_name, '') || ' ' || COALESCE(m.last_name, '')) AS name, m.email,
+              EXISTS (SELECT 1 FROM class_schedules cs WHERE cs.member_id = m.id AND cs.term_id = ?2) AS submitted
        FROM members m LEFT JOIN colleges c ON c.id = m.college_id
        WHERE m.role = 'member' AND m.status = 'active' AND m.onboarded_at IS NOT NULL
          AND (?1 IS NULL OR m.id IN (SELECT value FROM json_each(?1)))`,
-    ).bind(memberFilter),
-    D.prepare(`SELECT member_id FROM class_schedules WHERE term_id = ?1`).bind(t),
+    ).bind(memberFilter, t),
     D.prepare(
       `SELECT cs.member_id, ce.day_of_week, ce.start_time, ce.end_time
        FROM class_entries ce JOIN class_schedules cs ON cs.id = ce.schedule_id
@@ -69,7 +83,6 @@ export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?
     ).bind(eventId),
   ]);
 
-  const termRow = (term.results as { start_date: string; end_date: string }[])[0];
   const stored = Object.fromEntries((settings.results as { key: string; value_json: string }[]).map((r) => [r.key, JSON.parse(r.value_json)]));
   const s: Settings = { ...SETTINGS_DEFAULTS, ...stored };
   const now = manilaNow();
@@ -85,8 +98,8 @@ export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?
       endAt: x.end_at,
       requiredVolunteers: x.required_volunteers,
       activeCount,
-      termStart: termRow.start_date,
-      termEnd: termRow.end_date,
+      termStart,
+      termEnd,
       today,
       now,
       requireSchedule: s['assignment.requireSchedule'],
@@ -96,10 +109,11 @@ export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?
     };
   });
 
-  const submitted = new Set((scheds.results as { member_id: number }[]).map((r) => r.member_id));
   const syStart = schoolYearStart(today, s['schoolYear.startMonth']);
   const byMember = new Map<number, CandidateFacts>();
-  for (const m of members.results as { id: number; gender: 'M' | 'F' | null; year_level: number | null; batch_year: number | null; height_cm: number | null; college_code: string | null }[]) {
+  const names = new Map<number, string>();
+  for (const m of members.results as { id: number; gender: 'M' | 'F' | null; year_level: number | null; batch_year: number | null; height_cm: number | null; college_code: string | null; submitted: number; name: string; email: string }[]) {
+    names.set(m.id, m.name || m.email);
     byMember.set(m.id, {
       memberId: m.id,
       gender: m.gender,
@@ -107,7 +121,7 @@ export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?
       yearLevel: m.year_level,
       isNew: m.batch_year === syStart,
       heightCm: m.height_cm,
-      scheduleSubmitted: submitted.has(m.id),
+      scheduleSubmitted: m.submitted === 1,
       classesByWeekday: {},
       weeklyUnavailable: {},
       dateUnavailable: [],
@@ -144,5 +158,6 @@ export async function loadCandidates(db: Db, eventId: number, opts: { memberIds?
     byMember.get(r.member_id)?.bookings.push({ shiftId: r.shift_id, start: r.start_at, end: r.end_at });
   }
 
-  return { event, shifts, facts: [...byMember.values()], roster: rosterRows };
+  const all = sh.results as ShiftRow[];
+  return { event, shifts, facts: [...byMember.values()], roster: rosterRows, names, labels: new Map(all.map((x) => [x.id, x.label])), totalShifts: all.length, settings: s };
 }
