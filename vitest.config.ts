@@ -7,7 +7,7 @@ export default defineConfig(async () => {
   return {
     test: {
       // CLAUDE.md: server/engine/ keeps 100% branch coverage (`pnpm test:engine`).
-      coverage: { provider: 'v8', include: ['server/engine/**'], thresholds: { 100: true } },
+      coverage: { provider: 'v8' as const, include: ['server/engine/**'], thresholds: { 100: true } },
       projects: [
         {
           test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts', 'tests/unit/**/*.test.ts'], environment: 'node' },
