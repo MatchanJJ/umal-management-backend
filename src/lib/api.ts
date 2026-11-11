@@ -7,7 +7,7 @@ import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged, 
 import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
 import type { ClassEntry, ScheduleResponse, UnavailabilityDTO } from '../../shared/schedule';
 import type { Settings } from '../../shared/settings';
-import type { AssignmentDTO, CreateAssignmentsInput } from '../../shared/assignments';
+import type { AssignmentDTO, CreateAssignmentsInput, MarkAttendanceInput } from '../../shared/assignments';
 import type { EventDTO, EventInput, EventPatch } from '../../shared/events';
 import type { SessionResponse, TurnResponse } from '../../shared/ai';
 import type { Constraints, Pins } from '../../shared/constraints';
@@ -377,6 +377,15 @@ export function useCancelAssignment(eventId: number) {
   return useMutation({
     mutationFn: async ({ id, reason }: { id: number; reason: string }) =>
       unwrap(await client.api.assignments[':id'].cancel.$post({ param: { id: String(id) }, json: { reason } })),
+    onSettled: () => invalidate(eventId),
+  });
+}
+
+export function useMarkAttendance(eventId: number) {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async (json: MarkAttendanceInput) =>
+      unwrap<{ eventStatus: EventDTO['status']; version: number }>(await client.api.events[':id'].attendance.$put({ param: { id: String(eventId) }, json })),
     onSettled: () => invalidate(eventId),
   });
 }
