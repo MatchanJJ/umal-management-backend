@@ -7,7 +7,8 @@ type Row = { capability: string; method: string; path: string; body?: unknown; m
 // TRD §5 permission matrix: one representative endpoint per capability.
 const MATRIX: Row[] = [
   { capability: 'own assignments', method: 'GET', path: '/api/me/assignments', member: 200, adviser: 200 },
-  { capability: 'events CRUD', method: 'POST', path: '/api/events', body: {}, member: 403, adviser: 201 },
+  // Real validation now runs: an empty body reaching 400 proves the adviser passed the role guard.
+  { capability: 'events CRUD', method: 'POST', path: '/api/events', body: {}, member: 403, adviser: 400 },
   { capability: 'access requests', method: 'GET', path: '/api/access-requests', member: 403, adviser: 200 },
   { capability: 'role changes', method: 'PATCH', path: '/api/members/1', body: { role: 'adviser' }, member: 403, adviser: 200 },
   { capability: 'settings', method: 'PUT', path: '/api/settings', body: {}, member: 403, adviser: 200 },
