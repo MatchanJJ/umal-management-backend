@@ -10,7 +10,7 @@ export default defineConfig(async () => {
       coverage: { provider: 'v8' as const, include: ['server/engine/**'], thresholds: { 100: true } },
       projects: [
         {
-          test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts', 'tests/unit/**/*.test.ts'], environment: 'node' },
+          test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts', 'tests/unit/**/*.test.ts', 'tests/ai/**/*.test.ts'], environment: 'node' },
         },
         {
           test: { name: 'ui', include: ['tests/ui/**/*.test.tsx'], environment: 'jsdom' },
