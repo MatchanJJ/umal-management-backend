@@ -1,13 +1,15 @@
-// Single-shift allocation (TRD §8.4 steps 1–4). Pure and deterministic.
-import { emptyGroup, type Constraints, type GroupSpec } from '../../shared/constraints';
+// Single-shift allocation (TRD §8.4 steps 1–5). Pure and deterministic.
+export { matchesGroup } from './groups';
+export type { RelaxKey } from './diagnostics';
+import { emptyGroup, type Constraints } from '../../shared/constraints';
+import { suggestRelaxation, type RelaxKey } from './diagnostics';
 import { checkEligibility, isSelectable } from './eligibility';
+import { matchesGroup } from './groups';
 import { comparePriority } from './priorities';
 import { averageHours, scoreCandidate, type Score, type Weights } from './scoring';
 import { fnv1a32 } from './time';
 import type { CandidateFacts, Pins, Reason, ShiftCtx } from './types';
 
-/** Which single filter a shortfall suggestion would drop (refined in Task 3.6). */
-export type RelaxKey = string;
 export type AllocateCtx = ShiftCtx & { weights: Weights; loadUnitHours: number; remainingSlots: number };
 export type Pick = { memberId: number; groupIndex: number; rank: number; score: Score; softFlags: Reason[] };
 export type GroupResult = {
@@ -19,18 +21,6 @@ export type GroupResult = {
   suggestion?: { relax: RelaxKey; wouldAdd: number };
 };
 export type AllocationResult = { picks: Pick[]; groups: GroupResult[]; excluded: Partial<Record<Reason, number>>; totalEligible: number };
-
-/** Group filters; a null attribute never satisfies a filter that constrains it (review focus 5). */
-export function matchesGroup(f: CandidateFacts, g: GroupSpec): boolean {
-  return (
-    (g.colleges.length === 0 || (f.collegeCode !== null && g.colleges.includes(f.collegeCode))) &&
-    (g.gender === null || f.gender === g.gender) &&
-    (g.tenure === null || f.isNew === (g.tenure === 'new')) &&
-    (g.yearLevels.length === 0 || (f.yearLevel !== null && g.yearLevels.includes(f.yearLevel))) &&
-    (g.heightMinCm === null || (f.heightCm !== null && f.heightCm >= g.heightMinCm)) &&
-    (g.heightMaxCm === null || (f.heightCm !== null && f.heightCm <= g.heightMaxCm))
-  );
-}
 
 type Scored = { f: CandidateFacts; score: Score; softFlags: Reason[]; tie: number };
 
@@ -86,6 +76,11 @@ export function allocate(cands: CandidateFacts[], c: Constraints, pins: Pins, ct
     }
     if (x.g.count === null) leftForFill -= filled;
     results.push({ index: x.index, requested, filled, poolSize: x.pool.length, shortfall: requested - filled });
+  }
+
+  // 5. For each short group, the single relaxation that would help most (after all groups took their picks).
+  for (const r of results) {
+    if (r.shortfall > 0) r.suggestion = suggestRelaxation(cands, groups[r.index].g, c, pins, ctx, taken);
   }
 
   return { picks, groups: results.sort((a, b) => a.index - b.index), excluded, totalEligible: eligible.length };
