@@ -14,7 +14,8 @@
     "db:auth-schema": "auth generate --config server/db/auth.config.ts --adapter drizzle --dialect sqlite --output server/db/auth-schema.ts -y",
     "db:migrate:local": "wrangler d1 migrations apply umal-preview --local",
     "test:engine": "vitest run --project unit --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "evals": "tsx evals/run-evals.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.114",
@@ -57,6 +58,7 @@
     "eslint-config-next": "16.4.5",
     "jsdom": "^31.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0",
     "wrangler": "^4.158.0"

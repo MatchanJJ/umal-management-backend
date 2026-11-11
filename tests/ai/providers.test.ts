@@ -40,3 +40,27 @@ describe('provider call options', () => {
     vi.doUnmock('ai');
   });
 });
+
+describe('fake provider (e2e only)', () => {
+  it('is_used_only_when_AI_PROVIDER_fake_and_ENV_local_or_test', () => {
+    expect(providersFromEnv(env({ AI_PROVIDER: 'fake', ENV: 'local', GEMINI_API_KEY: 'k' })).map((p) => p.model)).toEqual(['fake']);
+    expect(providersFromEnv(env({ AI_PROVIDER: 'fake', ENV: 'test' })).map((p) => p.model)).toEqual(['fake']);
+    for (const ENV of ['production', 'preview'] as const) {
+      expect(providersFromEnv(env({ AI_PROVIDER: 'fake', ENV, GEMINI_API_KEY: 'k' })).map((p) => p.model)).toEqual([DEFAULT_GEMINI_MODEL]);
+    }
+  });
+
+  it('parses_counts_genders_colleges_team_mode_and_confirmations', async () => {
+    const [fake] = providersFromEnv(env({ AI_PROVIDER: 'fake', ENV: 'test' }));
+    const ask = (text: string) =>
+      fake.generate({ system: '', messages: [{ role: 'user', content: `Shifts in scope:\nCurrent constraints: {}\n\nAdviser: ${text}` }], signal: new AbortController().signal }) as Promise<{
+        kind: string;
+        constraints: { groups: { count: number | null; gender: string | null; colleges: string[] }[]; teamMode: string };
+      }>;
+    expect(await ask('need 2 girls from CCE')).toMatchObject({ kind: 'update', constraints: { groups: [{ count: 2, gender: 'F', colleges: ['CCE'] }], teamMode: 'per_shift' } });
+    expect(await ask('tatlong lalaki')).toMatchObject({ constraints: { groups: [{ count: 3, gender: 'M' }] } });
+    expect(await ask('same 2 people all 3 days')).toMatchObject({ constraints: { groups: [{ count: 2 }], teamMode: 'same_team' } });
+    expect((await ask('yes assign them')).kind).toBe('confirm_request');
+    expect((await ask('sige')).kind).toBe('confirm_request');
+  });
+});

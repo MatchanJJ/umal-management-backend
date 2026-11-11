@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { toast } from 'sonner';
 import { eventSpan } from '@/components/events/EventList';
+import { AssignAITab } from '@/components/assignai/AssignAITab';
 import { RosterTab } from '@/components/events/RosterTab';
 import { StaffingBar } from '@/components/events/StaffingBar';
 import { StatusBadge } from '@/components/events/StatusBadge';
@@ -85,6 +86,7 @@ function View({ adviser }: { adviser: boolean }) {
   const { data: event, isLoading, isError } = useEvent(id);
   const patch = usePatchEvent(id ?? 0);
   const [cancelling, setCancelling] = useState(false);
+  const [tab, setTab] = useState('roster');
   if (isError) return <p className="text-sm text-destructive">Event not found.</p>;
   if (isLoading || !event) return <Skeleton className="h-96" />;
 
@@ -141,7 +143,7 @@ function View({ adviser }: { adviser: boolean }) {
       <StaffingBar filled={filled} required={required} className="max-w-md" />
 
       {adviser ? (
-        <Tabs defaultValue="roster" className="gap-4">
+        <Tabs value={tab} onValueChange={setTab} className="gap-4">
           <TabsList>
             <TabsTrigger value="roster">Roster</TabsTrigger>
             <TabsTrigger value="assignai">AssignAI</TabsTrigger>
@@ -151,10 +153,14 @@ function View({ adviser }: { adviser: boolean }) {
           <TabsContent value="roster">
             <RosterTab event={event} />
           </TabsContent>
-          {/* AssignAI (Task 5.4), Attendance (Task 6.1) and Activity (Task 6.3) arrive in later tasks. */}
           <TabsContent value="assignai">
-            <p className="text-sm text-muted-foreground">AssignAI is coming in a later update.</p>
+            {editable ? (
+              <AssignAITab event={event} onApproved={() => setTab('roster')} />
+            ) : (
+              <p className="text-sm text-muted-foreground">AssignAI is only available for draft and published events.</p>
+            )}
           </TabsContent>
+          {/* Attendance (Task 6.1) and Activity (Task 6.3) arrive in later tasks. */}
           <TabsContent value="attendance">
             <p className="text-sm text-muted-foreground">Attendance marking is coming in a later update.</p>
           </TabsContent>

@@ -11,6 +11,8 @@ export type Env = {
   GROQ_API_KEY?: string;
   GROQ_MODEL?: string;
   AI_GATEWAY_URL?: string;
+  /** 'fake' selects the deterministic e2e provider (honoured only when ENV is local/test). */
+  AI_PROVIDER?: string;
   BOOTSTRAP_ADVISER_EMAIL: string;
   ENV: 'local' | 'test' | 'preview' | 'production';
 };

@@ -16,6 +16,16 @@ export const RULES = [
   'The LLM never chooses which shifts are in scope; the adviser picks them in the UI.',
 ] as const;
 
+/** Phrasing hints found by the eval suite (evals/). They refine the rules above, never override them. */
+export const GUIDANCE = [
+  'Priorities: "attendance", "best attendance", "reliable", "dependable" → `reliable_first`. "Fewest hours", "least assigned", "spread the load" → `least_assigned_first`. "Freshies", "new members" → `new_first`. "Veterans", "experienced", "old members" → `returning_first`.',
+  '"Preferably X", "X preferred", "if possible X" is a soft preference → add the matching priority; it is not a filter.',
+  '"Also <gender>" when the current group has the other gender → keep that group and add a new group with that gender and `count: null` (never change the existing group\'s gender).',
+  'Gender-only messages ("males only", "no females", "lalaki lang") are clear: `update` the gender, not `clarify`. With no groups yet, create one group with `count: null`.',
+  'Engineering words ("CompE", "computer engineering", "civil", "electrical", "ECE", "engineer") → CEE. "Computing", "IT", "CS", "computer science" → CCE.',
+  'A number in the message is a count, even inside a team phrase: "same 2 people all 3 days" → one group with `count: 2` and `teamMode: \'same_team\'`. The number of days is not a count.',
+] as const;
+
 export type PromptShift = { label: string; startAt: string; endAt: string; weekdays: string[]; required: number; remaining: number };
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
@@ -29,6 +39,9 @@ export function buildSystem(vocab: Vocabulary): string {
     '',
     'Rules:',
     ...RULES.map((r, i) => `${i + 1}. ${r}`),
+    '',
+    'Phrasing guide:',
+    ...GUIDANCE.map((g) => `- ${g}`),
     '',
     'Vocabulary:',
     `- Colleges (code: name): ${vocab.colleges.map((c) => `${c.code}: ${c.name}`).join('; ')}`,

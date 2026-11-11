@@ -28,3 +28,6 @@ test-results/
 .codex/
 /CLAUDE.md
 graphify-out/
+
+# eval run outputs
+evals/results/
