@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
@@ -8,6 +9,10 @@ export default defineConfig(async () => {
       projects: [
         {
           test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts', 'tests/unit/**/*.test.ts'], environment: 'node' },
+        },
+        {
+          test: { name: 'ui', include: ['tests/ui/**/*.test.tsx'], environment: 'jsdom' },
+          resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
         },
         {
           plugins: [

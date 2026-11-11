@@ -5,6 +5,7 @@ import { hc, type InferRequestType } from 'hono/client';
 import type { AppType } from '../../server/app';
 import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged, TermDTO } from '../../shared/api';
 import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
+import type { ClassEntry, ScheduleResponse } from '../../shared/schedule';
 import type { Settings } from '../../shared/settings';
 import type { AccessStatus, Role } from '../../shared/enums';
 
@@ -198,6 +199,27 @@ export function useSaveSettings() {
   const onSuccess = useInvalidate(['settings']);
   return useMutation({
     mutationFn: async (json: Partial<Settings>) => unwrap<Settings>(await client.api.settings.$put({ json })),
+    onSuccess,
+  });
+}
+
+// ── Own class schedule ────────────────────────────────────────────────────
+export function useSchedule(termId?: number) {
+  return useQuery({
+    queryKey: ['schedule', termId ?? 'active'],
+    queryFn: async () =>
+      unwrap<ScheduleResponse>(await client.api.me.schedule.$get({ query: termId ? { termId: String(termId) } : {} })),
+  });
+}
+
+export async function fetchSchedule(termId: number) {
+  return unwrap<ScheduleResponse>(await client.api.me.schedule.$get({ query: { termId: String(termId) } }));
+}
+
+export function useSaveSchedule() {
+  const onSuccess = useInvalidate(['schedule'], ['me']);
+  return useMutation({
+    mutationFn: async (json: { termId: number; entries: ClassEntry[] }) => unwrap(await client.api.me.schedule.$put({ json })),
     onSuccess,
   });
 }

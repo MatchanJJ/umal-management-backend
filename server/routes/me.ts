@@ -11,6 +11,7 @@ import { requireApproved, requireMember, requireSession } from '../middleware/au
 import { isBootstrapAdviser, rerequestAt, type MemberRow } from '../services/access';
 import { auditInsert } from '../services/audit';
 import { validate } from '../validate';
+import { schedule } from './schedule';
 
 export function toMemberDTO(m: MemberRow): MemberDTO {
   return {
@@ -75,6 +76,7 @@ export const me = new Hono<AppEnv>().get('/', async (c) => {
     saveProfile(c, c.req.valid('json'), true),
   )
   .patch('/profile', ...requireMember, validate('json', ProfileInput), async (c) => saveProfile(c, c.req.valid('json'), false))
+  .route('/schedule', schedule)
   // Stub with its final guard (Task 1.3). Task 4.3 implements the member's own assignments.
   .get('/assignments', ...requireMember, (c) => c.json({ stub: true }));
 
