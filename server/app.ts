@@ -6,6 +6,7 @@ import { apiError } from './errors';
 import { accessRequests } from './routes/access';
 import { aiSessions } from './routes/ai';
 import { assignments } from './routes/assignments';
+import { attendance } from './routes/attendance';
 import { catalog } from './routes/catalog';
 import { events } from './routes/events';
 import { me } from './routes/me';
@@ -39,6 +40,7 @@ export const routes = app
   .route('/catalog', catalog)
   .route('/members', members)
   .route('/events', events)
+  .route('/events', attendance)
   .route('/assignments', assignments)
   .route('/ai-sessions', aiSessions)
   .route('/settings', settings)

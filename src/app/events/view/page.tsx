@@ -7,6 +7,7 @@ import { Suspense, useState } from 'react';
 import { toast } from 'sonner';
 import { eventSpan } from '@/components/events/EventList';
 import { AssignAITab } from '@/components/assignai/AssignAITab';
+import { AttendanceTab } from '@/components/events/AttendanceTab';
 import { RosterTab } from '@/components/events/RosterTab';
 import { StaffingBar } from '@/components/events/StaffingBar';
 import { StatusBadge } from '@/components/events/StatusBadge';
@@ -160,10 +161,10 @@ function View({ adviser }: { adviser: boolean }) {
               <p className="text-sm text-muted-foreground">AssignAI is only available for draft and published events.</p>
             )}
           </TabsContent>
-          {/* Attendance (Task 6.1) and Activity (Task 6.3) arrive in later tasks. */}
           <TabsContent value="attendance">
-            <p className="text-sm text-muted-foreground">Attendance marking is coming in a later update.</p>
+            <AttendanceTab event={event} />
           </TabsContent>
+          {/* Activity arrives in Task 6.3. */}
           <TabsContent value="activity">
             <p className="text-sm text-muted-foreground">The activity log is coming in a later update.</p>
           </TabsContent>

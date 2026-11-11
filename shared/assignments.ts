@@ -26,6 +26,21 @@ export type CreateAssignmentsInput = z.infer<typeof CreateAssignmentsInput>;
 
 export const CancelAssignmentInput = z.object({ reason: z.string().trim().min(3).max(300) }).strict();
 
+export const ATTENDANCE_STATUSES = ['attended', 'no_show', 'excused'] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
+/** TRD §6 `PUT /api/events/:id/attendance`. Each assignment at most once. */
+export const MarkAttendanceInput = z
+  .object({
+    entries: z
+      .array(z.object({ assignmentId: z.number().int().positive(), status: z.enum(ATTENDANCE_STATUSES) }).strict())
+      .min(1)
+      .max(500)
+      .refine((e) => new Set(e.map((x) => x.assignmentId)).size === e.length, 'Each assignment can be listed once'),
+  })
+  .strict();
+export type MarkAttendanceInput = z.infer<typeof MarkAttendanceInput>;
+
 /** Reasons a member can't be added: engine reasons plus NOT_ASSIGNABLE (not an active, onboarded member). */
 export type IneligibleDetail = { shiftId: number; memberId: number; reasons: string[] };
 
