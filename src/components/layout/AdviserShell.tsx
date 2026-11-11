@@ -93,7 +93,7 @@ function Brand() {
   );
 }
 
-function UserMenu({ me }: { me: MeResponse }) {
+export function UserMenu({ me }: { me: MeResponse }) {
   const initials = (me.member?.firstName?.[0] ?? me.user.name?.[0] ?? me.user.email[0]).toUpperCase();
   return (
     <DropdownMenu>

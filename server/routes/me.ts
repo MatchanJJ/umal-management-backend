@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
 import type { MeResponse, MemberDTO, TermDTO } from '../../shared/api';
 import { OnboardingInput, ProfileInput, studentNumberFromEmail } from '../../shared/profile';
@@ -11,7 +11,9 @@ import { requireApproved, requireMember, requireSession } from '../middleware/au
 import { isBootstrapAdviser, rerequestAt, type MemberRow } from '../services/access';
 import { auditInsert } from '../services/audit';
 import { validate } from '../validate';
+import { hoursBetween, manilaNow } from '../../shared/time';
 import { schedule } from './schedule';
+import { unavailability } from './unavailability';
 
 export function toMemberDTO(m: MemberRow): MemberDTO {
   return {
@@ -77,8 +79,57 @@ export const me = new Hono<AppEnv>().get('/', async (c) => {
   )
   .patch('/profile', ...requireMember, validate('json', ProfileInput), async (c) => saveProfile(c, c.req.valid('json'), false))
   .route('/schedule', schedule)
-  // Stub with its final guard (Task 1.3). Task 4.3 implements the member's own assignments.
-  .get('/assignments', ...requireMember, (c) => c.json({ stub: true }));
+  .route('/unavailability', unavailability)
+  // FR-9: own shifts (one row per shift) + active-term stats in hours served (FR-28a).
+  .get('/assignments', ...requireMember, async (c) => {
+    const db = getDb(c.env);
+    const { assignments: a, shifts: s, events: e } = schema;
+    const [rows, term] = await Promise.all([
+      db
+        .select({
+          assignmentId: a.id,
+          status: a.status,
+          eventId: e.id,
+          eventTitle: e.title,
+          venue: e.venue,
+          termId: e.termId,
+          shiftId: s.id,
+          shiftLabel: s.label,
+          startAt: s.startAt,
+          endAt: s.endAt,
+        })
+        .from(a)
+        .innerJoin(s, eq(s.id, a.shiftId))
+        .innerJoin(e, eq(e.id, a.eventId))
+        .where(and(eq(a.memberId, c.get('member')!.id), ne(a.status, 'cancelled'), ne(e.status, 'cancelled')))
+        .orderBy(asc(s.startAt)),
+      db.select({ id: schema.terms.id }).from(schema.terms).where(eq(schema.terms.isActive, true)).limit(1),
+    ]);
+    const now = manilaNow();
+    const items = rows.map((r) => ({
+      assignmentId: r.assignmentId,
+      status: r.status,
+      eventId: r.eventId,
+      eventTitle: r.eventTitle,
+      venue: r.venue,
+      shiftId: r.shiftId,
+      shiftLabel: r.shiftLabel,
+      startAt: r.startAt,
+      endAt: r.endAt,
+      hours: hoursBetween(r.startAt, r.endAt),
+    }));
+    const counted = rows.filter((r) => r.termId === term[0]?.id && r.status !== 'excused');
+    return c.json({
+      upcoming: items.filter((r) => r.endAt > now),
+      past: items.filter((r) => r.endAt <= now).reverse(),
+      termStats: {
+        hours: counted.reduce((sum, r) => sum + hoursBetween(r.startAt, r.endAt), 0),
+        shifts: counted.length,
+        attended: counted.filter((r) => r.status === 'attended').length,
+        noShow: counted.filter((r) => r.status === 'no_show').length,
+      },
+    });
+  });
 
 /** Writes the caller's own profile (FR-5). Role and email are never accepted here (schemas are strict). */
 async function saveProfile(c: Context<AppEnv>, input: ProfileInput, onboard: boolean) {

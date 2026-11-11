@@ -5,7 +5,7 @@ import { hc, type InferRequestType } from 'hono/client';
 import type { AppType } from '../../server/app';
 import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged, TermDTO } from '../../shared/api';
 import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
-import type { ClassEntry, ScheduleResponse } from '../../shared/schedule';
+import type { ClassEntry, ScheduleResponse, UnavailabilityDTO } from '../../shared/schedule';
 import type { Settings } from '../../shared/settings';
 import type { AccessStatus, Role } from '../../shared/enums';
 
@@ -220,6 +220,53 @@ export function useSaveSchedule() {
   const onSuccess = useInvalidate(['schedule'], ['me']);
   return useMutation({
     mutationFn: async (json: { termId: number; entries: ClassEntry[] }) => unwrap(await client.api.me.schedule.$put({ json })),
+    onSuccess,
+  });
+}
+
+// ── Own assignments + unavailability ──────────────────────────────────────
+export type MyAssignment = {
+  assignmentId: number;
+  status: 'assigned' | 'attended' | 'no_show' | 'excused';
+  eventId: number;
+  eventTitle: string;
+  venue: string | null;
+  shiftId: number;
+  shiftLabel: string;
+  startAt: string;
+  endAt: string;
+  hours: number;
+};
+export type MyAssignments = {
+  upcoming: MyAssignment[];
+  past: MyAssignment[];
+  termStats: { hours: number; shifts: number; attended: number; noShow: number };
+};
+
+export function useMyAssignments() {
+  return useQuery({ queryKey: ['my-assignments'], queryFn: async () => unwrap<MyAssignments>(await client.api.me.assignments.$get()) });
+}
+
+export function useUnavailability() {
+  return useQuery({
+    queryKey: ['unavailability'],
+    queryFn: async () => unwrap<UnavailabilityDTO[]>(await client.api.me.unavailability.$get()),
+  });
+}
+
+export function useAddUnavailability() {
+  const onSuccess = useInvalidate(['unavailability']);
+  return useMutation({
+    mutationFn: async (json: InferRequestType<typeof client.api.me.unavailability.$post>['json']) =>
+      unwrap<UnavailabilityDTO>(await client.api.me.unavailability.$post({ json })),
+    onSuccess,
+  });
+}
+
+export function useDeleteUnavailability() {
+  const onSuccess = useInvalidate(['unavailability']);
+  return useMutation({
+    mutationFn: async (id: number) => unwrap(await client.api.me.unavailability[':id'].$delete({ param: { id: String(id) } })),
     onSuccess,
   });
 }
