@@ -6,8 +6,10 @@ import { InterpreterOutput } from '../../shared/constraints';
 import type { Env } from '../env';
 import { SchemaMismatch, type Provider } from './interpret';
 
-// `gemini-flash-latest` tracks Google's current free-tier Flash model; override with GEMINI_MODEL.
-export const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
+// Checked live on 2026-11-12: 2.5 models are retired for new keys (404); gemini-3.8-flash and
+// gemini-flash-latest hang or return 503 on the free tier; gemini-3.5-flash-lite answers in ~1.3 s.
+// Override with GEMINI_MODEL.
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 export const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
 
 function provider(name: Provider['name'], modelId: string, model: LanguageModel): Provider {
@@ -22,6 +24,8 @@ function provider(name: Provider['name'], modelId: string, model: LanguageModel)
           messages,
           temperature: 0,
           abortSignal: signal,
+          // No SDK-level retries: their backoff eats the 8 s budget and hides 429/503s. interpret() owns retry/fallback.
+          maxRetries: 0,
           output: Output.object({ schema: InterpreterOutput }),
         });
         return output;

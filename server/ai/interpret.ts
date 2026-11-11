@@ -72,7 +72,8 @@ export async function interpret(
         const parsed = InterpreterOutput.safeParse(withDefaults(await callWithTimeout(p, system, msgs)));
         if (parsed.success) {
           const output = normalize(sanitize(parsed.data, ctx.vocabCodes), ctx.remainingByShift);
-          return { output, provider: p.name, model: p.model, latencyMs: Date.now() - started };
+          // Keep an earlier provider's failure so ai_turns records why the fallback was used (TRD §7.5).
+          return { output, provider: p.name, model: p.model, latencyMs: Date.now() - started, ...(lastError ? { error: lastError } : {}) };
         }
         problem = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
       } catch (e) {
