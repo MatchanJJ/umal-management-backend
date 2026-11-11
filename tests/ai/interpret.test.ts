@@ -96,6 +96,16 @@ describe('interpret (TRD §7.4–7.5)', () => {
     expect([r.provider, groq.calls]).toEqual(['groq', 1]);
   });
 
+  it('keeps_the_failed_providers_error_when_the_fallback_succeeds', async () => {
+    const gemini = fake('gemini', async () => Promise.reject(new Error('model overloaded (503)')));
+    const r = await interpret([gemini, fake('groq', async () => out())], input, ctx);
+    expect(r).toMatchObject({ provider: 'groq', error: expect.stringContaining('gemini: model overloaded (503)') });
+  });
+
+  it('no_error_when_first_provider_succeeds', async () => {
+    expect((await interpret([fake('gemini', async () => out())], input, ctx)).error).toBeUndefined();
+  });
+
   it('records_latency_and_last_error_on_fallback', async () => {
     const r = await interpret([fake('gemini', async () => Promise.reject(new Error('boom')))], input, ctx);
     expect(r).toMatchObject({ provider: 'none', error: expect.stringContaining('boom'), latencyMs: expect.any(Number) });
