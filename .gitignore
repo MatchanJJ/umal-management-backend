@@ -25,5 +25,6 @@ test-results/
 
 # local AI tooling (per-developer)
 .claude/
+.codex/
 /CLAUDE.md
 graphify-out/

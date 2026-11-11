@@ -8,7 +8,7 @@ import { matchesGroup } from './groups';
 import { comparePriority } from './priorities';
 import { averageHours, scoreCandidate, type Score, type Weights } from './scoring';
 import { fnv1a32 } from './time';
-import type { CandidateFacts, Pins, Reason, ShiftCtx } from './types';
+import type { CandidateFacts, Eligibility, Pins, Reason, ShiftCtx } from './types';
 
 export type AllocateCtx = ShiftCtx & { weights: Weights; loadUnitHours: number; remainingSlots: number };
 export type Pick = { memberId: number; groupIndex: number; rank: number; score: Score; softFlags: Reason[] };
@@ -24,13 +24,22 @@ export type AllocationResult = { picks: Pick[]; groups: GroupResult[]; excluded:
 
 type Scored = { f: CandidateFacts; score: Score; softFlags: Reason[]; tie: number };
 
-export function allocate(cands: CandidateFacts[], c: Constraints, pins: Pins, ctx: AllocateCtx): AllocationResult {
+/**
+ * `eligibilityOf` defaults to this shift's check; same-team allocation passes the union over all shifts in scope.
+ */
+export function allocate(
+  cands: CandidateFacts[],
+  c: Constraints,
+  pins: Pins,
+  ctx: AllocateCtx,
+  eligibilityOf: (f: CandidateFacts) => Eligibility = (f) => checkEligibility(f, ctx, pins),
+): AllocationResult {
   // 1. Partition and tally why the rest are excluded.
   const excluded: Partial<Record<Reason, number>> = {};
   const scoreCtx = { avgTermHours: averageHours(cands), loadUnitHours: ctx.loadUnitHours, today: ctx.today, weights: ctx.weights };
   const eligible: Scored[] = [];
   for (const f of cands) {
-    const e = checkEligibility(f, ctx, pins);
+    const e = eligibilityOf(f);
     if (isSelectable(e, c.allowClassConflicts)) {
       eligible.push({ f, score: scoreCandidate(f, scoreCtx), softFlags: e.soft, tie: fnv1a32(`${ctx.shiftId}:${f.memberId}`) });
       continue;
