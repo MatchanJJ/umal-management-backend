@@ -10,7 +10,7 @@ export default defineConfig({
   timeout: 60_000,
   use: { baseURL: 'http://localhost:3100', trace: 'retain-on-failure', ...devices['Desktop Chrome'] },
   webServer: [
-    { command: 'pnpm exec wrangler pages dev --port 8788', url: 'http://localhost:8788/api/health', reuseExistingServer: true, timeout: 120_000 },
+    { command: 'pnpm exec wrangler pages dev --port 8788 --binding AI_PROVIDER=fake', url: 'http://localhost:8788/api/health', reuseExistingServer: false, timeout: 120_000 },
     { command: 'pnpm exec next dev --port 3100', url: 'http://localhost:3100', reuseExistingServer: true, timeout: 120_000 },
   ],
 });

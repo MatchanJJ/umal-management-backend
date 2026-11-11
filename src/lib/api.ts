@@ -9,6 +9,8 @@ import type { ClassEntry, ScheduleResponse, UnavailabilityDTO } from '../../shar
 import type { Settings } from '../../shared/settings';
 import type { AssignmentDTO, CreateAssignmentsInput } from '../../shared/assignments';
 import type { EventDTO, EventInput, EventPatch } from '../../shared/events';
+import type { SessionResponse, TurnResponse } from '../../shared/ai';
+import type { Constraints, Pins } from '../../shared/constraints';
 import type { AccessStatus, Role } from '../../shared/enums';
 
 export const client = hc<AppType>('/', { init: { credentials: 'same-origin' } });
@@ -376,5 +378,30 @@ export function useCancelAssignment(eventId: number) {
     mutationFn: async ({ id, reason }: { id: number; reason: string }) =>
       unwrap(await client.api.assignments[':id'].cancel.$post({ param: { id: String(id) }, json: { reason } })),
     onSettled: () => invalidate(eventId),
+  });
+}
+
+// ── AssignAI ──────────────────────────────────────────────────────────────
+/** Starts or resumes this adviser's open session (the POST is idempotent). */
+export function useAiSession(eventId: number) {
+  return useQuery({
+    queryKey: ['ai-session', eventId],
+    queryFn: async () => unwrap<SessionResponse>(await client.api.events[':id']['ai-sessions'].$post({ param: { id: String(eventId) } })),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useAiTurn(sessionId: number) {
+  return useMutation({
+    mutationFn: async (json: { message: string; pins: Pins; scope: { shiftIds: number[] } }) =>
+      unwrap<TurnResponse>(await client.api['ai-sessions'][':id'].turns.$post({ param: { id: String(sessionId) }, json })),
+  });
+}
+
+export function useAiConstraints(sessionId: number) {
+  return useMutation({
+    mutationFn: async (json: { constraints: Constraints; pins: Pins; scope: { shiftIds: number[] } }) =>
+      unwrap<TurnResponse>(await client.api['ai-sessions'][':id'].constraints.$put({ param: { id: String(sessionId) }, json })),
   });
 }

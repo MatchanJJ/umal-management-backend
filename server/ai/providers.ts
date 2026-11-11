@@ -4,6 +4,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { generateText, NoObjectGeneratedError, Output, type LanguageModel } from 'ai';
 import { InterpreterOutput } from '../../shared/constraints';
 import type { Env } from '../env';
+import { fakeProvider } from './fake';
 import { SchemaMismatch, type Provider } from './interpret';
 
 // Checked live on 2026-11-12: 2.5 models are retired for new keys (404); gemini-3.8-flash and
@@ -40,6 +41,8 @@ function provider(name: Provider['name'], modelId: string, model: LanguageModel)
 
 /** Configured providers in fallback order. AI_GATEWAY_URL (optional Cloudflare AI Gateway) becomes each base URL. */
 export function providersFromEnv(env: Env): Provider[] {
+  // Deterministic fake for local e2e only; inert in preview/production (they never set ENV local/test).
+  if (env.AI_PROVIDER === 'fake' && (env.ENV === 'local' || env.ENV === 'test')) return [fakeProvider];
   const gateway = env.AI_GATEWAY_URL?.replace(/\/$/, '');
   const out: Provider[] = [];
   if (env.GEMINI_API_KEY) {
