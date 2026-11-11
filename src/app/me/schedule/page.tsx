@@ -4,6 +4,7 @@ import { CopyIcon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AppGate } from '@/components/layout/AppGate';
+import { AppShell } from '@/components/layout/MemberShell';
 import { ClassList } from '@/components/schedule/ClassList';
 import { WeekGrid, type GridEntry } from '@/components/schedule/WeekGrid';
 import { Button } from '@/components/ui/button';
@@ -161,13 +162,10 @@ export default function SchedulePage() {
   return (
     <AppGate require="onboarded">
       {(me) => (
-        // shortcut: plain container until Task 2.3 adds the member shell.
-        <main className="mx-auto w-full max-w-[960px] p-4 sm:p-6">
-          <h1 className="text-2xl font-bold">My class schedule</h1>
-          <span aria-hidden className="mt-2 mb-1 block h-[3px] w-10 bg-secondary" />
-          <p className="mb-6 text-sm text-muted-foreground">{me?.activeTerm?.name ?? 'No active term'}</p>
+        <AppShell me={me!} title="My class schedule">
+          <p className="-mt-4 mb-6 text-sm text-muted-foreground">{me?.activeTerm?.name ?? 'No active term'}</p>
           <ScheduleEditor />
-        </main>
+        </AppShell>
       )}
     </AppGate>
   );

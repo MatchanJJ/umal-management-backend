@@ -38,3 +38,33 @@ export function findOverlap<T extends Pick<ClassEntry, 'dayOfWeek' | 'startTime'
 }
 
 export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+
+// ── Unavailability (FR-8) ─────────────────────────────────────────────────
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+const blockTimes = {
+  startTime: TimeOfDay.optional(),
+  endTime: EndTime.optional(),
+  /** Shorthand for 00:00–24:00. */
+  wholeDay: z.boolean().optional(),
+  reason: z.string().trim().max(120).nullish(),
+};
+
+export const UnavailabilityInput = z
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal('weekly'), dayOfWeek: z.number().int().min(1).max(7), termId: z.number().int().positive().optional(), ...blockTimes }).strict(),
+    z.object({ kind: z.literal('date'), date: isoDate, ...blockTimes }).strict(),
+  ])
+  .transform(({ wholeDay, ...b }) => (wholeDay ? { ...b, startTime: '00:00', endTime: '24:00' } : b))
+  .refine((b) => b.startTime && b.endTime, { message: 'Give a start and end time, or mark it whole day', path: ['startTime'] })
+  .refine((b) => b.startTime! < b.endTime!, { message: 'End time must be after the start time', path: ['endTime'] });
+
+export type UnavailabilityDTO = {
+  id: number;
+  termId: number;
+  kind: 'weekly' | 'date';
+  dayOfWeek: number | null;
+  date: string | null;
+  startTime: string;
+  endTime: string;
+  reason: string | null;
+};

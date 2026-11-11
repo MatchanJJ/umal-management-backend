@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { AppGate } from '@/components/layout/AppGate';
-import { AdviserShell } from '@/components/layout/AdviserShell';
+import { AppShell } from '@/components/layout/MemberShell';
 import { AcademicFields, applyServerError, PersonalFields } from '@/components/profile/ProfileFields';
 import { Button } from '@/components/ui/button';
 import { useCatalog, useUpdateProfile } from '@/lib/api';
@@ -64,20 +64,11 @@ function ProfileForm({ me }: { me: MeResponse }) {
 export default function ProfilePage() {
   return (
     <AppGate require="onboarded">
-      {(me) =>
-        me!.member!.role === 'adviser' ? (
-          <AdviserShell me={me!} title="Profile">
-            <ProfileForm me={me!} />
-          </AdviserShell>
-        ) : (
-          // shortcut: plain container until Task 2.3 adds the member shell.
-          <main className="mx-auto w-full max-w-[960px] p-4 sm:p-6">
-            <h1 className="text-2xl font-bold">Profile</h1>
-            <span aria-hidden className="mt-2 mb-6 block h-[3px] w-10 bg-secondary" />
-            <ProfileForm me={me!} />
-          </main>
-        )
-      }
+      {(me) => (
+        <AppShell me={me!} title="Profile">
+          <ProfileForm me={me!} />
+        </AppShell>
+      )}
     </AppGate>
   );
 }
