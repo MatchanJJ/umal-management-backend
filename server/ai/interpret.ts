@@ -15,6 +15,8 @@ export type Provider = {
 export type InterpretResult = { output: InterpreterOutput; provider: 'gemini' | 'groq' | 'none'; model?: string; latencyMs: number; error?: string };
 
 export const PROVIDER_TIMEOUT_MS = 8_000;
+/** Global budget: at most 2 LLM calls per AI turn (free tiers). Retries and fallbacks share it. */
+export const MAX_LLM_CALLS = 2;
 export const UNAVAILABLE_REPLY = 'AI is unavailable; edit the constraints card directly.';
 const MAX_ASSUMPTIONS = 5;
 
@@ -58,12 +60,15 @@ export async function interpret(
   const started = Date.now();
   const { system, messages } = buildMessages(input);
   let lastError: string | undefined;
+  let calls = 0;
 
   for (const p of providers) {
     let msgs = messages;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    // A retry (attempt 1) and a fallback provider both spend from the same per-turn budget.
+    for (let attempt = 0; attempt < 2 && calls < MAX_LLM_CALLS; attempt++) {
       let problem: string;
       try {
+        calls++;
         const parsed = InterpreterOutput.safeParse(withDefaults(await callWithTimeout(p, system, msgs)));
         if (parsed.success) {
           const output = normalize(sanitize(parsed.data, ctx.vocabCodes), ctx.remainingByShift);

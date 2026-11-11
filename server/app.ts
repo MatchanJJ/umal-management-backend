@@ -4,6 +4,7 @@ import { createAuth } from './auth';
 import type { AppEnv } from './env';
 import { apiError } from './errors';
 import { accessRequests } from './routes/access';
+import { aiSessions } from './routes/ai';
 import { assignments } from './routes/assignments';
 import { catalog } from './routes/catalog';
 import { events } from './routes/events';
@@ -39,6 +40,7 @@ export const routes = app
   .route('/members', members)
   .route('/events', events)
   .route('/assignments', assignments)
+  .route('/ai-sessions', aiSessions)
   .route('/settings', settings)
   .route('/terms', terms)
   .route('/test', testLogin)

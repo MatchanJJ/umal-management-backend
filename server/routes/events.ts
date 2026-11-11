@@ -21,6 +21,7 @@ import { requireAdviser, requireMember } from '../middleware/auth';
 import { CreateAssignmentsInput } from '../../shared/assignments';
 import { writeAssignments } from '../services/assignment-writer';
 import { auditStmt } from '../services/audit';
+import { startSession } from './ai';
 import { loadCandidates } from '../services/candidate-loader';
 import { termForDate } from '../services/terms';
 import { guardedBatch } from '../services/write-guard';
@@ -305,6 +306,9 @@ export const events = new Hono<AppEnv>()
       })),
     });
   })
+
+  // Start or resume this adviser's AssignAI session (App Flow §7.2).
+  .post('/:id/ai-sessions', ...requireAdviser, validate('param', IdParam), (c) => startSession(c, c.req.valid('param').id))
 
   // TRD §8.5: the only route that creates assignments (manual adds and AI approvals).
   .post('/:id/assignments', ...requireAdviser, validate('param', IdParam), validate('json', CreateAssignmentsInput), async (c) => {

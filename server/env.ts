@@ -29,4 +29,8 @@ export type MemberCtx = {
 /** The signed-in Better Auth user, set by `requireSession`. */
 export type AuthUser = { id: string; email: string; name: string; image: string | null };
 
-export type AppEnv = { Bindings: Env; Variables: { member?: MemberCtx; authUser?: AuthUser } };
+/** Variables set by middleware. `aiProviders` is only ever set by tests (dependency injection); prod uses env keys. */
+export type AppEnv = {
+  Bindings: Env;
+  Variables: { member?: MemberCtx; authUser?: AuthUser; aiProviders?: import('./ai/interpret').Provider[] };
+};

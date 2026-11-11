@@ -36,7 +36,8 @@ describe('interpret (TRD §7.4–7.5)', () => {
     expect([gemini.calls, groq.calls]).toEqual([1, 1]);
   });
 
-  it('retries_once_on_validation_error_then_falls_back', async () => {
+  // Global budget: at most 2 LLM calls per turn (Mark's ruling: the cap wins over "retry then fall back").
+  it('retries_once_on_validation_error_within_the_2_call_budget', async () => {
     const seen: string[] = [];
     const gemini = fake('gemini', async (args) => {
       seen.push(String(args.messages[args.messages.length - 1].content));
@@ -44,8 +45,21 @@ describe('interpret (TRD §7.4–7.5)', () => {
     });
     const groq = fake('groq', async () => out());
     const r = await interpret([gemini, groq], input, ctx);
-    expect([gemini.calls, groq.calls, r.provider]).toEqual([2, 1, 'groq']);
+    expect([gemini.calls, groq.calls, r.provider]).toEqual([2, 0, 'none']);
     expect(seen[1]).toMatch(/did not match the schema/i);
+  });
+
+  it('retry_succeeds_on_second_call', async () => {
+    let n = 0;
+    const gemini = fake('gemini', async () => (n++ === 0 ? { kind: 'update', constraints: { groups: [{ count: 0 }] } } : out()));
+    expect((await interpret([gemini], input, ctx)).provider).toBe('gemini');
+  });
+
+  it('fallback_provider_gets_only_the_remaining_call', async () => {
+    const gemini = fake('gemini', async () => Promise.reject(new Error('down')));
+    const groq = fake('groq', async () => ({ kind: 'update', constraints: { groups: [{ count: 0 }] } }));
+    const r = await interpret([gemini, groq], input, ctx);
+    expect([gemini.calls, groq.calls, r.provider]).toEqual([1, 1, 'none']);
   });
 
   it('none_provider_returns_unchanged_constraints_and_notice', async () => {
