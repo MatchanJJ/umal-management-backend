@@ -13,7 +13,7 @@ const MATRIX: Row[] = [
   { capability: 'access requests', method: 'GET', path: '/api/access-requests', member: 403, adviser: 200 },
   { capability: 'role changes', method: 'PATCH', path: '/api/members/1', body: { role: 'adviser' }, member: 403, adviser: 200 },
   { capability: 'settings', method: 'PUT', path: '/api/settings', body: {}, member: 403, adviser: 200 },
-  { capability: 'fairness report', method: 'GET', path: '/api/reports/fairness', member: 403, adviser: 200 },
+  { capability: 'fairness report', method: 'GET', path: '/api/reports/fairness', member: 403, adviser: 400 },
 ];
 
 function call(row: Pick<Row, 'method' | 'path' | 'body'>, headers?: Headers) {
