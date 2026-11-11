@@ -12,7 +12,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:auth-schema": "auth generate --config server/db/auth.config.ts --adapter drizzle --dialect sqlite --output server/db/auth-schema.ts -y",
-    "db:migrate:local": "wrangler d1 migrations apply umal-preview --local"
+    "db:migrate:local": "wrangler d1 migrations apply umal-preview --local",
+    "test:engine": "vitest run --project unit --coverage"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.9.1",
@@ -43,6 +44,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.1.0",
     "auth": "^1.7.18",
     "concurrently": "^10.0.7",
     "drizzle-kit": "^0.31.11",

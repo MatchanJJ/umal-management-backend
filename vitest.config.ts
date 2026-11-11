@@ -6,6 +6,8 @@ export default defineConfig(async () => {
   const migrations = await readD1Migrations('./migrations');
   return {
     test: {
+      // CLAUDE.md: server/engine/ keeps 100% branch coverage (`pnpm test:engine`).
+      coverage: { provider: 'v8' as const, include: ['server/engine/**'], thresholds: { 100: true } },
       projects: [
         {
           test: { name: 'unit', include: ['tests/design/**/*.test.ts', 'tests/engine/**/*.test.ts', 'tests/unit/**/*.test.ts'], environment: 'node' },

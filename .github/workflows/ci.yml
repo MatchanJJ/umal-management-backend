@@ -25,6 +25,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm vitest run
+      - run: pnpm test:engine
       - run: pnpm next build
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
