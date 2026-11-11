@@ -7,6 +7,8 @@ import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged, 
 import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
 import type { ClassEntry, ScheduleResponse, UnavailabilityDTO } from '../../shared/schedule';
 import type { Settings } from '../../shared/settings';
+import type { AssignmentDTO, CreateAssignmentsInput } from '../../shared/assignments';
+import type { EventDTO, EventInput, EventPatch } from '../../shared/events';
 import type { AccessStatus, Role } from '../../shared/enums';
 
 export const client = hc<AppType>('/', { init: { credentials: 'same-origin' } });
@@ -268,5 +270,111 @@ export function useDeleteUnavailability() {
   return useMutation({
     mutationFn: async (id: number) => unwrap(await client.api.me.unavailability[':id'].$delete({ param: { id: String(id) } })),
     onSuccess,
+  });
+}
+
+// ── Events, roster, manual assignment ─────────────────────────────────────
+export type RosterAssignment = { id: number; memberId: number; name: string; status: string; source: string; conflictOverride: boolean };
+export type Roster = {
+  version: number;
+  shifts: { shiftId: number; label: string; startAt: string; endAt: string; requiredVolunteers: number; assignments: RosterAssignment[] }[];
+};
+export type Candidate = {
+  member: { id: number; firstName: string | null; lastName: string | null; email: string; studentNumber: string | null; collegeCode: string | null; yearLevel: number | null; termHours: number };
+  eligibility: { hard: string[]; soft: string[] };
+  score: { total: number; loadGap: number; recency: number; reliability: number };
+};
+
+export function useEvents(status?: EventDTO['status']) {
+  return useQuery({
+    queryKey: ['events', status ?? 'all'],
+    queryFn: async () => unwrap<{ items: EventDTO[]; total: number }>(await client.api.events.$get({ query: status ? { status } : {} })),
+  });
+}
+
+export function useEvent(id: number | null) {
+  return useQuery({
+    queryKey: ['event', id],
+    enabled: id !== null,
+    queryFn: async () => unwrap<EventDTO>(await client.api.events[':id'].$get({ param: { id: String(id) } })),
+  });
+}
+
+export function useRoster(id: number | null) {
+  return useQuery({
+    queryKey: ['roster', id],
+    enabled: id !== null,
+    queryFn: async () => unwrap<Roster>(await client.api.events[':id'].roster.$get({ param: { id: String(id) } })),
+  });
+}
+
+/** Everything that changes when an event or its roster changes. */
+function useInvalidateEvent() {
+  const qc = useQueryClient();
+  return (id?: number) =>
+    Promise.all([qc.invalidateQueries({ queryKey: ['events'] }), qc.invalidateQueries({ queryKey: ['event', id] }), qc.invalidateQueries({ queryKey: ['roster', id] }), qc.invalidateQueries({ queryKey: ['candidates', id] })]);
+}
+
+export function useCreateEvent() {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async (json: EventInput) => unwrap<EventDTO>(await client.api.events.$post({ json })),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function usePatchEvent(id: number) {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async (json: EventPatch) => unwrap<EventDTO>(await client.api.events[':id'].$patch({ param: { id: String(id) }, json })),
+    onSettled: () => invalidate(id),
+  });
+}
+
+export function useDailyShifts(id: number) {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async (json: InferRequestType<(typeof client.api.events)[':id']['shifts']['daily']['$post']>['json']) =>
+      unwrap<EventDTO>(await client.api.events[':id'].shifts.daily.$post({ param: { id: String(id) }, json })),
+    onSettled: () => invalidate(id),
+  });
+}
+
+export function useCancelEvent(id: number) {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async (json: { reason: string; expectedVersion: number }) =>
+      unwrap<EventDTO>(await client.api.events[':id'].cancel.$post({ param: { id: String(id) }, json })),
+    onSettled: () => invalidate(id),
+  });
+}
+
+export function useCandidates(eventId: number, shiftId: number | null, search: string) {
+  return useQuery({
+    queryKey: ['candidates', eventId, shiftId, search],
+    enabled: shiftId !== null,
+    queryFn: async () =>
+      unwrap<{ items: Candidate[] }>(
+        await client.api.events[':id'].candidates.$get({ param: { id: String(eventId) }, query: { shiftId: String(shiftId), ...(search ? { search } : {}) } }),
+      ),
+  });
+}
+
+/** On 409 the roster is refetched (onSettled) so the adviser sees the other person's change. */
+export function useAddAssignments(eventId: number) {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async (json: CreateAssignmentsInput) =>
+      unwrap<{ created: AssignmentDTO[]; version: number }>(await client.api.events[':id'].assignments.$post({ param: { id: String(eventId) }, json })),
+    onSettled: () => invalidate(eventId),
+  });
+}
+
+export function useCancelAssignment(eventId: number) {
+  const invalidate = useInvalidateEvent();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) =>
+      unwrap(await client.api.assignments[':id'].cancel.$post({ param: { id: String(id) }, json: { reason } })),
+    onSettled: () => invalidate(eventId),
   });
 }
