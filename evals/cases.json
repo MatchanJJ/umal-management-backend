@@ -1,0 +1,3905 @@
+[
+ {
+  "id": "v1_001",
+  "source": "v1",
+  "category": "basic",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "I need 2 females",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F"
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_002",
+  "source": "v1",
+  "category": "basic",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Get 3 volunteers from CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_003",
+  "source": "v1",
+  "category": "basic",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "5 freshmen males",
+  "expectedAny": [
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 5,
+      "gender": "M",
+      "tenure": "new"
+     }
+    ]
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 5,
+      "gender": "M",
+      "yearLevels": [
+       1
+      ]
+     }
+    ]
+   }
+  ],
+  "note": "freshmen = new members or year 1"
+ },
+ {
+  "id": "v1_004",
+  "source": "v1",
+  "category": "basic",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need 1 engineer from CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 1,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_005",
+  "source": "v1",
+  "category": "basic",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 architects",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ]
+  },
+  "note": "v1 code CAFE → CAFAE"
+ },
+ {
+  "id": "v1_006",
+  "source": "v1",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 freshie females from CCE and 1 veteran male from CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": "new"
+    },
+    {
+     "count": 1,
+     "colleges": [
+      "CEE"
+     ],
+     "gender": "M",
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_007",
+  "source": "v1",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "1 female from CCE, 2 males from CAFAE, and 3 from CHE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 1,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 2,
+     "gender": "M",
+     "colleges": [
+      "CAFAE"
+     ]
+    },
+    {
+     "count": 3,
+     "colleges": [
+      "CHE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_008",
+  "source": "v1",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Get 3 newbie females and 2 experienced males",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F",
+     "tenure": "new"
+    },
+    {
+     "count": 2,
+     "gender": "M",
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_009",
+  "source": "v1",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "I prefer males first, need 5 volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "male_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_010",
+  "source": "v1",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Get girls, preferably freshies. Need 6 volunteers",
+  "expectedAny": [
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 6,
+      "gender": "F"
+     }
+    ],
+    "priorities": [
+     "new_first"
+    ]
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 6,
+      "gender": "F",
+      "tenure": "new"
+     }
+    ]
+   }
+  ],
+  "note": "\"preferably\" = priority, though a tenure filter is acceptable"
+ },
+ {
+  "id": "v1_011",
+  "source": "v1",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Kahit may klase, best attendance priority. Need 3 people",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3
+    }
+   ],
+   "allowClassConflicts": true,
+   "priorities": [
+    "reliable_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_012",
+  "source": "v1",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Let's give newbies a chance. Need 4 volunteers",
+  "expectedAny": [
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 4
+     }
+    ],
+    "priorities": [
+     "new_first"
+    ]
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 4,
+      "tenure": "new"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "v1_013",
+  "source": "v1",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need experienced members. 5 volunteers only.",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5,
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_014",
+  "source": "v1",
+  "category": "conflicts",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Can have class conflicts. Need 2 volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2
+    }
+   ],
+   "allowClassConflicts": true
+  }
+ },
+ {
+  "id": "v1_015",
+  "source": "v1",
+  "category": "conflicts",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "No conflicts allowed. Get 3 people",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_016",
+  "source": "v1",
+  "category": "conflicts",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Flexible scheduling, but best attendance must apply. Need 4",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "priorities": [
+    "reliable_first"
+   ]
+  },
+  "note": "\"flexible\" is not an explicit conflicts statement (rule 6) — conflicts not checked"
+ },
+ {
+  "id": "v1_017",
+  "source": "v1",
+  "category": "height",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Males should be taller than the females. Need 3 guys and 2 girls",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "M"
+    },
+    {
+     "count": 2,
+     "gender": "F"
+    }
+   ]
+  },
+  "note": "relative height rule is not supported; groups only"
+ },
+ {
+  "id": "v1_018",
+  "source": "v1",
+  "category": "height",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need tall volunteers, 5'6 and above. Need 2",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "heightMinCm": 168
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_019",
+  "source": "v1",
+  "category": "height",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need people between 5'4 and 6'2. Get 3",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "heightMinCm": 163,
+     "heightMaxCm": 188
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_020",
+  "source": "v1",
+  "category": "tagalog",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Kailangan ko ng 3 babae",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F"
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_021",
+  "source": "v1",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Kailangan ko ng 2 tao mula sa CAFAE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_022",
+  "source": "v1",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Get 2 ate from CAFAE, fresh lang",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ],
+     "gender": "F",
+     "tenure": "new"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_023",
+  "source": "v1",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Kahit may klase, just get them. Need 4",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "allowClassConflicts": true
+  }
+ },
+ {
+  "id": "v1_024",
+  "source": "v1",
+  "category": "edge",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Just get some people",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null
+    }
+   ]
+  },
+  "note": "rule 2: never invent a count"
+ },
+ {
+  "id": "v1_025",
+  "source": "v1",
+  "category": "edge",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "From CEE college",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_026",
+  "source": "v1",
+  "category": "edge",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Males only",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "gender": "M"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_027",
+  "source": "v1",
+  "category": "contradictions",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "1 male and 1 female, but must be all males",
+  "expectedAny": [
+   {
+    "kind": "clarify"
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 2,
+      "gender": "M"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "v1_028",
+  "source": "v1",
+  "category": "priorities",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "No conflicts allowed but best attendance must apply",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [
+    "reliable_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_029",
+  "source": "v1",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Yes, that's perfect!",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "v1_030",
+  "source": "v1",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Looks good, proceed",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "v1_031",
+  "source": "v1",
+  "category": "confirm",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "No, that doesn't work",
+  "expected": {
+   "notKind": "confirm_request"
+  }
+ },
+ {
+  "id": "v1_032",
+  "source": "v1",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Ok but add one more from CAFAE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 1,
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ]
+  },
+  "note": "not a confirmation: it changes the request"
+ },
+ {
+  "id": "v1_033",
+  "source": "v1",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 CompE students",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  },
+  "note": "v1 expected CTE (wrong); Computer Engineering is under CEE"
+ },
+ {
+  "id": "v1_034",
+  "source": "v1",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "3 Civil Engineers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_035",
+  "source": "v1",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "1 from CCE or CTE, and 2 from CAFAE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 1,
+     "colleges": [
+      "CCE",
+      "CTE"
+     ]
+    },
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_036",
+  "source": "v1",
+  "category": "tenure",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need 2 freshmen",
+  "expectedAny": [
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 2,
+      "tenure": "new"
+     }
+    ]
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 2,
+      "yearLevels": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "v1_037",
+  "source": "v1",
+  "category": "tenure",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Experienced senior members, 3 needed",
+  "expectedAny": [
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 3,
+      "tenure": "returning"
+     }
+    ]
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 3,
+      "tenure": "returning",
+      "yearLevels": [
+       4
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "v1_038",
+  "source": "v1",
+  "category": "tenure",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 vets",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_039",
+  "source": "v1",
+  "category": "complex",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need 3 females from CAFAE (veterans preferred) with attendance priority",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F",
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ],
+   "priorities": [
+    "reliable_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_040",
+  "source": "v1",
+  "category": "complex",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Mix of 2 females and 2 males, half fresh half experienced",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F"
+    },
+    {
+     "count": 2,
+     "gender": "M"
+    }
+   ]
+  },
+  "note": "split of tenure is ambiguous; genders and counts only"
+ },
+ {
+  "id": "v1_041",
+  "source": "v1",
+  "category": "complex",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "For the event at 2-4pm: 4 total volunteers, preferably 2 females from CCE or CAFAE (must be experienced), 2 males, attendance is crucial",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CAFAE",
+      "CCE"
+     ],
+     "tenure": "returning"
+    },
+    {
+     "count": 2,
+     "gender": "M"
+    }
+   ],
+   "priorities": [
+    "reliable_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_042",
+  "source": "v1",
+  "category": "complex",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "5 volunteers needed, can work with schedule conflicts, prefer new members to get experience, males prioritized",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "allowClassConflicts": true,
+   "priorities": [
+    "new_first",
+    "male_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_043",
+  "source": "v1",
+  "category": "numbers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Need three females",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_044",
+  "source": "v1",
+  "category": "numbers",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Get me 25 volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 25
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_045",
+  "source": "v1",
+  "category": "numbers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Just 1 person needed",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 1
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_046",
+  "source": "v1",
+  "category": "negation",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "No females allowed, males only",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "gender": "M"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_047",
+  "source": "v1",
+  "category": "negation",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Experienced only, no freshies",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_048",
+  "source": "v1",
+  "category": "negation",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Anyone except CCE",
+  "expectedAny": [
+   {
+    "kind": "clarify"
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": null,
+      "colleges": [
+       "BED",
+       "CAE",
+       "CAFAE",
+       "CASE",
+       "CBAE",
+       "CCJE",
+       "CEE",
+       "CHE",
+       "CHSE",
+       "CLE",
+       "CTE",
+       "PS",
+       "TS"
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "v1_049",
+  "source": "v1",
+  "category": "questions",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Hi! How are you?",
+  "expected": {
+   "kind": "answer"
+  }
+ },
+ {
+  "id": "v1_050",
+  "source": "v1",
+  "category": "questions",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Same as last time",
+  "expectedAny": [
+   {
+    "kind": "clarify"
+   },
+   {
+    "kind": "answer"
+   }
+  ],
+  "note": "no memory of past events"
+ },
+ {
+  "id": "v1_051",
+  "source": "v1",
+  "category": "questions",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "How many volunteers can you get me by Thursday?",
+  "expectedAny": [
+   {
+    "kind": "answer"
+   },
+   {
+    "kind": "clarify"
+   }
+  ]
+ },
+ {
+  "id": "v1_052",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "I need 3 volunteers"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Female please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_053",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "I need 3 volunteers"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "Female please"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "New members only",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F",
+     "tenure": "new"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_054",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "Need 5 people"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Males first please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "male_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_055",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "Need 5 people"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "Males first please"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [
+    "male_first"
+   ],
+   "teamMode": "per_shift"
+  },
+  "message": "Attendance takes priority, class conflicts are fine",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "male_first",
+    "reliable_first"
+   ],
+   "allowClassConflicts": true
+  }
+ },
+ {
+  "id": "v1_056",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "2 female volunteers"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "From CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_057",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "2 female volunteers"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "From CCE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "New members please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ],
+     "tenure": "new"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_058",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "I need 2 females from CCE and 1 male from CAFAE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 1,
+     "colleges": [
+      "CAFAE"
+     ],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "No class conflicts allowed",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 1,
+     "gender": "M",
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "v1_059",
+  "source": "v1",
+  "category": "multi_turn",
+  "gate": "confirm_request",
+  "history": [
+   {
+    "role": "user",
+    "content": "I need 2 females from CCE and 1 male from CAFAE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "No class conflicts allowed"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 1,
+     "colleges": [
+      "CAFAE"
+     ],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Perfect, looks good!",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "v1_060",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "Kailangan ko ng 3 babae"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Mula sa CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_061",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "Kailangan ko ng 3 babae"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "Mula sa CCE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Bago lang, yung mga freshie",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ],
+     "tenure": "new"
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_062",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "5 males from CTE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [
+      "CTE"
+     ],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Actually change to 3 males from CCE and 2 females from CAFAE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "M",
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "v1_063",
+  "source": "v1",
+  "category": "multi_turn",
+  "history": [
+   {
+    "role": "user",
+    "content": "5 males from CTE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "Actually change to 3 males from CCE and 2 females from CAFAE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Prioritize by attendance please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "M",
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ],
+   "priorities": [
+    "reliable_first"
+   ]
+  }
+ },
+ {
+  "id": "v1_064",
+  "source": "v1",
+  "category": "multi_turn",
+  "gate": "confirm_request",
+  "history": [
+   {
+    "role": "user",
+    "content": "5 males from CTE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "Actually change to 3 males from CCE and 2 females from CAFAE"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   },
+   {
+    "role": "user",
+    "content": "Prioritize by attendance please"
+   },
+   {
+    "role": "assistant",
+    "content": "Updated."
+   }
+  ],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [
+    "reliable_first"
+   ],
+   "teamMode": "per_shift"
+  },
+  "message": "Yes, assign them now",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "audit_065",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "I need volunteer from CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  },
+  "note": "no count invented"
+ },
+ {
+  "id": "audit_066",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Female volunteers please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_067",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Experienced members only",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_068",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "Males from CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": null,
+     "gender": "M",
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_069",
+  "source": "audit",
+  "category": "no_hallucination",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "I need 3 volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "audit_070",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 females please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": []
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_071",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "4 new members",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4,
+     "tenure": "new",
+     "colleges": []
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_072",
+  "source": "audit",
+  "category": "no_hallucination",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "3 from CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": null
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_073",
+  "source": "audit",
+  "category": "no_hallucination",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "5 volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5,
+     "gender": null,
+     "colleges": []
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "audit_074",
+  "source": "audit",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 from CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_075",
+  "source": "audit",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "1 volunteer from CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 1,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_076",
+  "source": "audit",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 from CAFAE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CAFAE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_077",
+  "source": "audit",
+  "category": "colleges",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "3 from CAE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CAE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_078",
+  "source": "audit",
+  "category": "gender",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 female volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_079",
+  "source": "audit",
+  "category": "gender",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "3 male members",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "M"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_080",
+  "source": "audit",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "dalawang babae",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_081",
+  "source": "audit",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "tatlong lalaki",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "M"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_082",
+  "source": "audit",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 from CCE and 1 from CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 1,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_083",
+  "source": "audit",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "1 from CCE, 2 from CAE and 3 from CHE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 1,
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 2,
+     "colleges": [
+      "CAE"
+     ]
+    },
+    {
+     "count": 3,
+     "colleges": [
+      "CHE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_084",
+  "source": "audit",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 males and 3 females",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "M"
+    },
+    {
+     "count": 3,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_085",
+  "source": "audit",
+  "category": "multi_group",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 females from CCE and 3 males from CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    },
+    {
+     "count": 3,
+     "gender": "M",
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_086",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "make it 3",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "tenure": null,
+     "gender": null
+    }
+   ]
+  },
+  "note": "no tenure invented"
+ },
+ {
+  "id": "audit_087",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "i need 5",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5,
+     "tenure": null
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_088",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "add 2 more",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 7,
+     "tenure": null
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_089",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "change to 4",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4,
+     "gender": "F"
+    }
+   ]
+  },
+  "note": "gender kept, not invented or dropped"
+ },
+ {
+  "id": "audit_090",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "also males",
+  "expectedAny": [
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 3,
+      "gender": "F"
+     },
+     {
+      "count": null,
+      "gender": "M"
+     }
+    ]
+   },
+   {
+    "kind": "update",
+    "groups": [
+     {
+      "count": 3,
+      "gender": null
+     }
+    ]
+   },
+   {
+    "kind": "clarify"
+   }
+  ],
+  "note": "\"also males\" alongside females"
+ },
+ {
+  "id": "audit_091",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "make it females",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "F"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_092",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "experienced only",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "tenure": "returning"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_093",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "new members please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "tenure": "new"
+    }
+   ]
+  }
+ },
+ {
+  "id": "audit_094",
+  "source": "audit",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "ok looks good",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "audit_095",
+  "source": "audit",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "perfect assign them",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "audit_096",
+  "source": "audit",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "yes go ahead",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "audit_097",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "from CCE please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  },
+  "note": "count kept"
+ },
+ {
+  "id": "audit_098",
+  "source": "audit",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "switch to CEE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CEE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_099",
+  "source": "new",
+  "category": "tagalog",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "kailangan ko ng 6 ushers, 3 lalaki at 3 babae",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "gender": "M"
+    },
+    {
+     "count": 3,
+     "gender": "F"
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "new_100",
+  "source": "new",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "4 na babae galing CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_101",
+  "source": "new",
+  "category": "tagalog",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "lima na lalaki",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5,
+     "gender": "M"
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_102",
+  "source": "new",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 4,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "lalaki lang",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4,
+     "gender": "M"
+    }
+   ]
+  },
+  "note": "review focus 4: patch gender, keep count"
+ },
+ {
+  "id": "new_103",
+  "source": "new",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 2,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "babae lang yung CCE",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2,
+     "gender": "F",
+     "colleges": [
+      "CCE"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_104",
+  "source": "new",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "gawin mong 8",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 8
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_105",
+  "source": "new",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "matatangkad lang, 170 pataas",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5,
+     "heightMinCm": 170
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_106",
+  "source": "new",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [
+      "CCE"
+     ],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "tanggalin yung CCE, kahit anong college",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 3,
+     "colleges": []
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_107",
+  "source": "new",
+  "category": "modifiers",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "year 3 and 4 only",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5,
+     "yearLevels": [
+      3,
+      4
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": "new_108",
+  "source": "new",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "unahin yung mga kaunti pa lang ang hours",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "least_assigned_first"
+   ]
+  }
+ },
+ {
+  "id": "new_109",
+  "source": "new",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "yung matatangkad muna",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "tallest_first"
+   ]
+  }
+ },
+ {
+  "id": "new_110",
+  "source": "new",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "reliable ones first please",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "reliable_first"
+   ]
+  }
+ },
+ {
+  "id": "new_111",
+  "source": "new",
+  "category": "priorities",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "returning members first, then the tallest",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 5
+    }
+   ],
+   "priorities": [
+    "returning_first",
+    "tallest_first"
+   ]
+  }
+ },
+ {
+  "id": "new_112",
+  "source": "new",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "sige",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "new_113",
+  "source": "new",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "go na",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "new_114",
+  "source": "new",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "sige, i-assign mo na",
+  "expected": {
+   "kind": "confirm_request"
+  },
+  "note": "review focus 4"
+ },
+ {
+  "id": "new_115",
+  "source": "new",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "ok na yan, assign them",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "new_116",
+  "source": "new",
+  "category": "confirm",
+  "gate": "confirm_request",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "M",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    },
+    {
+     "count": 3,
+     "colleges": [],
+     "gender": "F",
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "yes",
+  "expected": {
+   "kind": "confirm_request"
+  }
+ },
+ {
+  "id": "new_117",
+  "source": "new",
+  "category": "unknown_college",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "2 volunteers from CNE",
+  "expected": {
+   "kind": "clarify"
+  },
+  "note": "rule 3"
+ },
+ {
+  "id": "new_118",
+  "source": "new",
+  "category": "unknown_college",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "kailangan ko ng 3 galing sa College of Magic",
+  "expected": {
+   "kind": "clarify"
+  }
+ },
+ {
+  "id": "new_119",
+  "source": "new",
+  "category": "team_mode",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "same 2 people all 3 days",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 2
+    }
+   ],
+   "teamMode": "same_team"
+  }
+ },
+ {
+  "id": "new_120",
+  "source": "new",
+  "category": "team_mode",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 4,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "iisang team lang para sa buong event",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "teamMode": "same_team"
+  }
+ },
+ {
+  "id": "new_121",
+  "source": "new",
+  "category": "team_mode",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 4,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "same_team"
+  },
+  "message": "iba-iba bawat araw",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "teamMode": "per_shift"
+  }
+ },
+ {
+  "id": "new_122",
+  "source": "new",
+  "category": "team_mode",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 4,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "same_team"
+  },
+  "message": "rotate them each day",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "teamMode": "per_shift"
+  }
+ },
+ {
+  "id": "new_123",
+  "source": "new",
+  "category": "conflicts",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "kahit may klase ok lang, 4 volunteers",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "allowClassConflicts": true
+  }
+ },
+ {
+  "id": "new_124",
+  "source": "new",
+  "category": "conflicts",
+  "gate": "conflicts_default",
+  "history": [],
+  "currentConstraints": {
+   "groups": [],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "need 4 volunteers for the open house",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "new_125",
+  "source": "new",
+  "category": "conflicts",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 4,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": true,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "walang may klase dapat",
+  "expected": {
+   "kind": "update",
+   "groups": [
+    {
+     "count": 4
+    }
+   ],
+   "allowClassConflicts": false
+  }
+ },
+ {
+  "id": "new_126",
+  "source": "new",
+  "category": "questions",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "paano mo pinipili kung sino?",
+  "expected": {
+   "kind": "answer"
+  }
+ },
+ {
+  "id": "new_127",
+  "source": "new",
+  "category": "questions",
+  "history": [],
+  "currentConstraints": {
+   "groups": [
+    {
+     "count": 5,
+     "colleges": [],
+     "gender": null,
+     "tenure": null,
+     "yearLevels": [],
+     "heightMinCm": null,
+     "heightMaxCm": null
+    }
+   ],
+   "allowClassConflicts": false,
+   "priorities": [],
+   "teamMode": "per_shift"
+  },
+  "message": "what does same team mean?",
+  "expected": {
+   "kind": "answer"
+  }
+ }
+]
