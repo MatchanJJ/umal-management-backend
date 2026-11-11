@@ -271,6 +271,41 @@ export const events = new Hono<AppEnv>()
     return c.json(await readEvent(D, id));
   })
 
+  // Roster grouped by shift + version (TRD §6). Members: names only, published events only.
+  .get('/:id/roster', ...requireMember, validate('param', IdParam), async (c) => {
+    const id = c.req.valid('param').id;
+    const memberView = c.get('member')!.role === 'member';
+    const e = await readEvent(c.env.DB, id);
+    if (!e || (memberView && e.status !== 'published')) return apiError(c, 404, 'NOT_FOUND', 'Event not found');
+    const rows = (
+      await c.env.DB.prepare(
+        `SELECT a.id, a.shift_id AS shiftId, a.member_id AS memberId, a.status, a.source, a.conflict_override AS conflictOverride,
+                TRIM(COALESCE(m.first_name, '') || ' ' || COALESCE(m.last_name, '')) AS name, m.email
+         FROM assignments a JOIN members m ON m.id = a.member_id
+         WHERE a.event_id = ?1 AND a.status <> 'cancelled' ORDER BY a.assigned_at, a.id`,
+      )
+        .bind(id)
+        .all<{ id: number; shiftId: number; memberId: number; status: string; source: string; conflictOverride: number; name: string; email: string }>()
+    ).results;
+    return c.json({
+      version: e.version,
+      shifts: e.shifts.map((s) => ({
+        shiftId: s.id,
+        label: s.label,
+        startAt: s.startAt,
+        endAt: s.endAt,
+        requiredVolunteers: s.requiredVolunteers,
+        assignments: rows
+          .filter((r) => r.shiftId === s.id)
+          .map((r) =>
+            memberView
+              ? { name: r.name || r.email }
+              : { id: r.id, memberId: r.memberId, name: r.name || r.email, status: r.status, source: r.source, conflictOverride: r.conflictOverride === 1 },
+          ),
+      })),
+    });
+  })
+
   // TRD §8.5: the only route that creates assignments (manual adds and AI approvals).
   .post('/:id/assignments', ...requireAdviser, validate('param', IdParam), validate('json', CreateAssignmentsInput), async (c) => {
     const r = await writeAssignments(getDb(c.env), c.get('member')!.id, c.req.valid('param').id, c.req.valid('json'));

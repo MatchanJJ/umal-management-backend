@@ -12,6 +12,7 @@ import { members } from './routes/members';
 import { reports } from './routes/reports';
 import { settings } from './routes/settings';
 import { terms } from './routes/terms';
+import { testLogin } from './routes/test-login';
 
 export const app = new Hono<AppEnv>().basePath('/api');
 
@@ -40,6 +41,7 @@ export const routes = app
   .route('/assignments', assignments)
   .route('/settings', settings)
   .route('/terms', terms)
+  .route('/test', testLogin)
   .route('/reports', reports);
 
 export type AppType = typeof routes;
