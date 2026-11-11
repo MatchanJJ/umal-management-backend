@@ -18,6 +18,8 @@ import { averageHours, checkEligibility, daysBetween, scoreCandidate } from '../
 import type { AppEnv } from '../env';
 import { apiError } from '../errors';
 import { requireAdviser, requireMember } from '../middleware/auth';
+import { CreateAssignmentsInput } from '../../shared/assignments';
+import { writeAssignments } from '../services/assignment-writer';
 import { auditStmt } from '../services/audit';
 import { loadCandidates } from '../services/candidate-loader';
 import { termForDate } from '../services/terms';
@@ -267,6 +269,13 @@ export const events = new Hono<AppEnv>()
     ]);
     if (!ok) return conflict(c);
     return c.json(await readEvent(D, id));
+  })
+
+  // TRD §8.5: the only route that creates assignments (manual adds and AI approvals).
+  .post('/:id/assignments', ...requireAdviser, validate('param', IdParam), validate('json', CreateAssignmentsInput), async (c) => {
+    const r = await writeAssignments(getDb(c.env), c.get('member')!.id, c.req.valid('param').id, c.req.valid('json'));
+    if (!r.ok) return apiError(c, r.status, r.code, r.message, r.details);
+    return c.json({ created: r.created, version: r.version }, 201);
   })
 
   // Manual-add dialog (App Flow §6): every active member with their eligibility and score for one shift.

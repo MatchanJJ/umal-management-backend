@@ -17,10 +17,10 @@ it('guarded_batch_rolls_back_everything_on_version_mismatch', async () => {
   const rename = (t: string) => env.DB.prepare(`UPDATE events SET title = ?2 WHERE id = ?1`).bind(eventId, t);
 
   // Simulates the race: the version moved between the route's check and its write.
-  expect(await guardedBatch(env.DB, eventId, 7, [rename('Stale')])).toBe(false);
+  expect(await guardedBatch(env.DB, eventId, 7, [rename('Stale')])).toBeNull();
   expect(await env.DB.prepare('SELECT title, version FROM events WHERE id = ?1').bind(eventId).first()).toEqual({ title: 'Old', version: 0 });
 
-  expect(await guardedBatch(env.DB, eventId, 0, [rename('Fresh')])).toBe(true);
+  expect(await guardedBatch(env.DB, eventId, 0, [rename('Fresh')])).toHaveLength(1);
   expect(await env.DB.prepare('SELECT title, version FROM events WHERE id = ?1').bind(eventId).first()).toEqual({ title: 'Fresh', version: 1 });
   expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM write_guards').first()).toEqual({ n: 0 });
 });
