@@ -12,6 +12,7 @@ import {
   UsersIcon,
   type LucideIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
@@ -87,8 +88,8 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
 function Brand() {
   return (
     <div className="px-3 pb-6">
-      <p className="text-lg font-bold leading-tight text-primary">UMAL</p>
-      <p className="text-xs font-medium text-muted-foreground">University of Mindanao</p>
+      <Image src="/brand/umal-logo.png" alt="UMAL" width={381} height={120} className="h-8 w-auto" />
+      <p className="mt-1.5 text-xs font-medium text-muted-foreground">University of Mindanao</p>
     </div>
   );
 }

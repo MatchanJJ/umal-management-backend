@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { AppGate } from '@/components/layout/AppGate';
@@ -38,9 +39,15 @@ function LoginScreen() {
     <main className="grid min-h-svh lg:grid-cols-[1.1fr_1fr]">
       {/* Brand band (Design Brief §5): maroon, white text, one gold highlight word. */}
       <section className="flex flex-col justify-between bg-primary px-6 py-8 text-primary-foreground sm:px-10 lg:px-14 lg:py-12">
-        <div>
-          <p className="text-xl font-bold">UMAL</p>
-          <p className="text-sm font-medium text-primary-foreground/85">University of Mindanao</p>
+        {/* The red mark disappears on maroon and mustn't be recoloured (Design Brief §2), so it sits on a white tile. */}
+        <div className="flex items-center gap-3">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white p-2">
+            <Image src="/brand/umal-mark.png" alt="" width={105} height={120} className="h-full w-auto" />
+          </span>
+          <div>
+            <p className="text-xl leading-tight font-bold">UMAL</p>
+            <p className="text-sm font-medium text-primary-foreground/85">University of Mindanao</p>
+          </div>
         </div>
         <div className="my-10 max-w-lg lg:my-0">
           <h1 className="text-3xl leading-tight font-extrabold sm:text-4xl sm:leading-[44px]">
