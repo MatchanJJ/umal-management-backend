@@ -18,6 +18,13 @@ describe('POST /api/test/login (e2e only)', () => {
     expect(await env.DB.prepare(`SELECT COUNT(*) AS n FROM members WHERE email = 'e2e.adviser@umindanao.edu.ph'`).first()).toEqual({ n: 1 });
   });
 
+  it('onboarded_false_leaves_onboarding_to_the_test', async () => {
+    const res = await login({ email: 'e2e.fresh.member@umindanao.edu.ph', role: 'member', onboarded: false });
+    const cookie = res.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+    const me = (await (await SELF.fetch('http://x/api/me', { headers: { cookie } })).json()) as { accessStatus: string; onboarded: boolean };
+    expect(me).toMatchObject({ accessStatus: 'approved', onboarded: false });
+  });
+
   it.each(['production', 'preview', undefined])('is_404_when_ENV_is_%s', async (ENV) => {
     const res = await login({ email: 'x.attacker.123456@umindanao.edu.ph', role: 'adviser' }, (req) => Promise.resolve(app.fetch(req, { ...env, ENV })));
     expect(res.status).toBe(404);
