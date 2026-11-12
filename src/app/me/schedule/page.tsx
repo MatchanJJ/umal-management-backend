@@ -14,10 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { fetchSchedule, useSaveSchedule, useSchedule } from '@/lib/api';
-import { ClassEntry, DAY_NAMES, findOverlap, type ScheduleResponse } from '../../../../shared/schedule';
+import { ClassEntry, DAY_CODES, DAY_NAMES, entriesForDayCode, findOverlap, type DayCode, type ScheduleResponse } from '../../../../shared/schedule';
 
-function AddClass({ draft, onAdd }: { draft: GridEntry[]; onAdd: (e: GridEntry) => void }) {
-  const [entry, setEntry] = useState({ dayOfWeek: 1, startTime: '08:00', endTime: '09:30', label: '' });
+function AddClass({ draft, onAdd }: { draft: GridEntry[]; onAdd: (e: GridEntry[]) => void }) {
+  const [entry, setEntry] = useState<{ code: DayCode; startTime: string; endTime: string; label: string }>({ code: 'Mon', startTime: '08:00', endTime: '09:30', label: '' });
   const [error, setError] = useState<string | null>(null);
   return (
     <form
@@ -25,25 +25,29 @@ function AddClass({ draft, onAdd }: { draft: GridEntry[]; onAdd: (e: GridEntry) 
       className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_auto_auto_1.5fr_auto] sm:items-end"
       onSubmit={(e) => {
         e.preventDefault();
-        const parsed = ClassEntry.safeParse({ ...entry, label: entry.label.trim() || null });
-        if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check the times');
-        const clash = findOverlap([...draft, parsed.data]);
-        if (clash) return setError(`Overlaps your ${clash[0].label || 'class'} ${clash[0].startTime}–${clash[0].endTime}`);
+        const { code, ...time } = entry;
+        // One row per day the code covers; same times and label on each.
+        const parsed = entriesForDayCode(code, { ...time, label: time.label.trim() || null }).map((row) => ClassEntry.safeParse(row));
+        const bad = parsed.find((p) => !p.success);
+        if (bad && !bad.success) return setError(bad.error.issues[0]?.message ?? 'Check the times');
+        const rows = parsed.map((p) => p.data!);
+        const clash = findOverlap([...draft, ...rows]);
+        if (clash) return setError(`Overlaps your ${clash[0].label || 'class'} on ${DAY_NAMES[clash[0].dayOfWeek - 1]} ${clash[0].startTime}–${clash[0].endTime}`);
         setError(null);
-        onAdd(parsed.data);
+        onAdd(rows);
         setEntry({ ...entry, label: '' });
       }}
     >
       <div className="space-y-1.5">
         <Label htmlFor="cls-day">Day</Label>
-        <Select value={String(entry.dayOfWeek)} onValueChange={(v) => setEntry({ ...entry, dayOfWeek: Number(v) })}>
+        <Select value={entry.code} onValueChange={(v) => setEntry({ ...entry, code: v as DayCode })}>
           <SelectTrigger id="cls-day" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {DAY_NAMES.map((d, i) => (
-              <SelectItem key={d} value={String(i + 1)}>
-                {d}
+            {DAY_CODES.map((d) => (
+              <SelectItem key={d.code} value={d.code}>
+                {d.code} · {d.hint}
               </SelectItem>
             ))}
           </SelectContent>
@@ -102,7 +106,7 @@ function DraftEditor({ data }: { data: ScheduleResponse }) {
           Add your classes for this term and press <strong>Submit schedule</strong>. Advisers can&apos;t assign you to events until you do.
         </p>
       )}
-      <AddClass draft={draft} onAdd={(e) => update([...draft, e])} />
+      <AddClass draft={draft} onAdd={(rows) => update([...draft, ...rows])} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {data.previousTermAvailable && data.previousTermId && (

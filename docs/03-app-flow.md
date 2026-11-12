@@ -98,7 +98,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   A[/me/schedule/] --> B[Weekly grid Mon–Sat, 07:00–21:00, 30-min snap]
-  B --> C[Add class: day, start, end, label]
+  B --> C[Add class: UM day code, start, end, label]
   C --> D{overlaps own entry?}
   D -- yes --> E[Inline error]
   D -- no --> B

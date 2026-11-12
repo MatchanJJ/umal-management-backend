@@ -80,13 +80,13 @@ UMAL has no officer layer; there are only these two roles. Only users with the *
 - **FR-6** Rejected users see a rejection screen and cannot request access again for 7 days.
 
 ### 5.2 Member self-service
-- **FR-7** Members enter their **class schedule per term**: weekday, start time, end time, optional subject label.
+- **FR-7** Members enter their **class schedule per term**: UM day code (M-Sa = Mon–Sat, M-SA1 = Mon–Wed, M-SA2 = Thu–Sat, or a single day Mon, Tue, Wed, Thu, Fri, Sa), start time, end time, optional subject label. A multi-day code is stored as one class per weekday.
 - **FR-8** Members add **unavailability blocks**, either weekly (e.g. "Saturdays 08:00–12:00, family") or for a specific date.
 - **FR-9** Members see their upcoming and past shifts with status, plus their own term stats: hours served, shifts served and attendance rate.
 - **FR-10** Members whose schedule for the active term isn't submitted see a persistent banner. By default they are **not assignable** (setting `assignment.requireSchedule`).
 
 ### 5.3 Terms and catalog
-- **FR-11** Advisers manage academic terms (name, start date, end date). Exactly one term is active at a time.
+- **FR-11** Advisers manage academic terms: term (1st Semester, 2nd Semester or Summer), school year, start date and end date, all editable later (terms get extended). The name is built from term and year: "1st Semester AY 2026-2027", "Summer 2027". Exactly one term is active at a time.
 - **FR-12** Advisers manage colleges and courses. The catalog is seeded with the 14 official UM academic units (see Backend Schema §7). The AI reads its allowed values from this catalog, not from code.
 
 ### 5.4 Events

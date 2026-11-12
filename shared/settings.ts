@@ -36,6 +36,23 @@ export const SETTINGS_DEFAULTS: Settings = {
   'schoolYear.startMonth': 8,
 };
 
+/** UM has three terms a school year. Names are built from kind + year so every term is named the same way. */
+export const TERM_KINDS = ['1st Semester', '2nd Semester', 'Summer'] as const;
+export type TermKind = (typeof TERM_KINDS)[number];
+
+/** Semesters span a school year ("1st Semester AY 2026-2027"); summer is one calendar year ("Summer 2027"). */
+export function termName(kind: TermKind, year: number): string {
+  return kind === 'Summer' ? `Summer ${year}` : `${kind} AY ${year}-${year + 1}`;
+}
+
+/** Inverse of termName; null for names typed before this format (the editor then starts from defaults). */
+export function parseTermName(name: string): { kind: TermKind; year: number } | null {
+  const sem = /^(1st|2nd) Semester AY (\d{4})-(\d{4})$/.exec(name);
+  if (sem && Number(sem[3]) === Number(sem[2]) + 1) return { kind: `${sem[1]} Semester` as TermKind, year: Number(sem[2]) };
+  const summer = /^Summer (\d{4})$/.exec(name);
+  return summer ? { kind: 'Summer', year: Number(summer[1]) } : null;
+}
+
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 
 export const TermInput = z
