@@ -182,7 +182,7 @@ describe('AI sessions', () => {
     const busy = await signIn(env, { role: 'adviser' });
     const e = await event();
     const s = await start(e, busy.headers);
-    await seedTurns(s.session.id, busy.memberId, 39, new Date().toISOString());
+    await seedTurns(s.session.id, busy.memberId!, 39, new Date().toISOString());
     const before = llm.calls;
     const res = await Promise.all(Array.from({ length: 5 }, () => turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers)));
     expect(res.map((r) => r.status).sort()).toEqual([200, 429, 429, 429, 429]);
@@ -193,7 +193,7 @@ describe('AI sessions', () => {
     const busy = await signIn(env, { role: 'adviser' });
     const e = await event();
     const s = await start(e, busy.headers);
-    await seedTurns(s.session.id, busy.memberId, 40, new Date().toISOString(), 'manual_edit');
+    await seedTurns(s.session.id, busy.memberId!, 40, new Date().toISOString(), 'manual_edit');
     expect((await turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers)).status).toBe(200);
   });
 
@@ -201,7 +201,7 @@ describe('AI sessions', () => {
     const busy = await signIn(env, { role: 'adviser' });
     const e = await event();
     const s = await start(e, busy.headers);
-    await seedTurns(s.session.id, busy.memberId, AI_TURNS_PER_DAY, new Date(Date.now() - 5 * 3_600_000).toISOString()); // outside the hour
+    await seedTurns(s.session.id, busy.memberId!, AI_TURNS_PER_DAY, new Date(Date.now() - 5 * 3_600_000).toISOString()); // outside the hour
     const res = await turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers);
     expect(res.status).toBe(429);
     expect(await res.json()).toMatchObject({ error: { code: 'AI_RATE_LIMITED' } });
@@ -212,7 +212,7 @@ describe('AI sessions', () => {
     const e = await event();
     const theirs = await start(e, other.headers);
     const at = new Date(Date.now() - 5 * 3_600_000).toISOString();
-    await seedTurns(theirs.session.id, other.memberId, AI_TURNS_PER_DAY_ALL, at);
+    await seedTurns(theirs.session.id, other.memberId!, AI_TURNS_PER_DAY_ALL, at);
     try {
       const fresh = await signIn(env, { role: 'adviser' });
       const mine = await start(e, fresh.headers);
