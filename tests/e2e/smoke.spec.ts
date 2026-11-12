@@ -29,6 +29,7 @@ async function pick(page: Page, label: string, option: string | RegExp) {
 
 test('smoke_full_flow', async ({ page, browser }) => {
   const first = `Smoke${runId}`;
+  const memberEmail = `s.member.x${runId}@umindanao.edu.ph`;
   const fullName = `${first} Member`;
 
   // ── Adviser: a term for today, active.
@@ -38,7 +39,7 @@ test('smoke_full_flow', async ({ page, browser }) => {
   // ── Member: first sign-in → onboarding → schedule.
   const memberCtx = await browser.newContext({ baseURL: BASE });
   const member = await memberCtx.newPage();
-  const login = await member.request.post('/api/test/login', { data: { email: `s.member.x${runId}@umindanao.edu.ph`, role: 'member', onboarded: false } });
+  const login = await member.request.post('/api/test/login', { data: { email: memberEmail, role: 'member', onboarded: false } });
   expect(login.status(), await login.text()).toBe(200);
   await member.goto('/');
   await expect(member).toHaveURL(/\/onboarding\/$/);
@@ -99,4 +100,16 @@ test('smoke_full_flow', async ({ page, browser }) => {
   await expect(row).toBeVisible();
   await expect(row.getByRole('cell').nth(3)).toHaveText('1'); // shifts
   await expect(row.getByRole('cell').nth(4)).toHaveText('1'); // attended
+
+  // ── Member sees it in History and in their term stats.
+  const back = await browser.newContext({ baseURL: BASE });
+  const again = await back.newPage();
+  expect((await again.request.post('/api/test/login', { data: { email: memberEmail, role: 'member' } })).status()).toBe(200);
+  await again.goto('/me/history/');
+  const past = again.getByRole('row').filter({ hasText: `Smoke fair ${runId}` });
+  await expect(past).toBeVisible();
+  await expect(past.getByText('Attended')).toBeVisible();
+  await again.goto('/me/');
+  await expect(again.getByRole('region', { name: 'This term' }).getByText('100%')).toBeVisible();
+  await back.close();
 });

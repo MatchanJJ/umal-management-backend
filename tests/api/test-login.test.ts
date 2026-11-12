@@ -25,6 +25,14 @@ describe('POST /api/test/login (e2e only)', () => {
     expect(me).toMatchObject({ accessStatus: 'approved', onboarded: false });
   });
 
+  it('access_pending_files_a_pending_request_and_no_member', async () => {
+    const res = await login({ email: 'e2e.waiting.member@umindanao.edu.ph', role: 'member', access: 'pending' });
+    const cookie = res.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+    const me = (await (await SELF.fetch('http://x/api/me', { headers: { cookie } })).json()) as { accessStatus: string; member: unknown };
+    expect(me).toMatchObject({ accessStatus: 'pending', member: null });
+    expect(await env.DB.prepare(`SELECT status, source FROM access_requests WHERE email = 'e2e.waiting.member@umindanao.edu.ph'`).first()).toMatchObject({ status: 'pending' });
+  });
+
   it.each(['production', 'preview', undefined])('is_404_when_ENV_is_%s', async (ENV) => {
     const res = await login({ email: 'x.attacker.123456@umindanao.edu.ph', role: 'adviser' }, (req) => Promise.resolve(app.fetch(req, { ...env, ENV })));
     expect(res.status).toBe(404);
