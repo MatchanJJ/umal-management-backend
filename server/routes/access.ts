@@ -93,8 +93,13 @@ export const accessRequests = new Hono<AppEnv>()
           }),
       );
       await db.batch([auditInsert(db, actor.id, 'access.bulk_approve', 'access_request', null, { role, ...result }), ...writes]);
-      // Users who already signed in (were pending) get their member row now.
-      for (const email of toApprove.filter((e) => byEmail.has(e))) await ensureMember(db, email, role);
+      // Users who already signed in (were pending) get their member row now. Best effort: the approvals are committed, and
+      // anyone this misses (a long list can hit D1's per-request query limit) gets their row on their next /api/me.
+      try {
+        for (const email of toApprove.filter((e) => byEmail.has(e))) await ensureMember(db, email, role);
+      } catch (e) {
+        console.error('bulk approve: member rows deferred to /api/me', e);
+      }
     }
     return c.json(result);
   })

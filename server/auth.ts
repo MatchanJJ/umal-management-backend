@@ -26,8 +26,13 @@ export function authOptions(env: Env) {
       },
     },
     session: { expiresIn: 30 * DAY, updateAge: DAY },
+    // Better Auth's default switch is NODE_ENV=production, which Workers never set. Memory storage lives per isolate, so this is
+    // best effort; shortcut: move to a Cloudflare rate-limit rule once there is a custom domain.
+    // Sign-in is relaxed from the default 3 per 10 s: students on campus Wi-Fi share one IP.
+    rateLimit: { enabled: env.ENV === 'production' || env.ENV === 'preview', customRules: { '/sign-in/social': { window: 60, max: 30 } } },
     advanced: {
       defaultCookieAttributes: { httpOnly: true, secure: true, sameSite: 'lax' },
+      ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
     },
     databaseHooks: {
       user: {

@@ -1,0 +1,1 @@
+CREATE INDEX `ai_turns_created` ON `ai_turns` (`created_at`);

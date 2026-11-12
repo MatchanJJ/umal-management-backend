@@ -15,13 +15,17 @@ export const SettingsPatch = z
     'assignment.requireSchedule': z.boolean(),
     'scoring.weights': ScoringWeights,
     'scoring.loadUnitHours': z.number().min(1).max(12),
-    'ai.turnsPerHour': z.number().int().min(1).max(500),
+    'ai.turnsPerHour': z.number().int().min(1).max(100),
     'schoolYear.startMonth': z.number().int().min(1).max(12),
   })
   .partial()
   .strict();
 
 export type Settings = Required<z.infer<typeof SettingsPatch>>;
+
+/** Fixed AssignAI ceilings over a rolling 24 h, on top of `ai.turnsPerHour`, so no setting can lift spend without bound. */
+export const AI_TURNS_PER_DAY = 150; // per adviser
+export const AI_TURNS_PER_DAY_ALL = 600; // all advisers together
 
 export const SETTINGS_DEFAULTS: Settings = {
   'auth.allowedEmailDomain': 'umindanao.edu.ph',

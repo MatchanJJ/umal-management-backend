@@ -5,6 +5,7 @@ import { app } from '../../server/app';
 import type { Provider } from '../../server/ai/interpret';
 import type { AppEnv, Env } from '../../server/env';
 import { emptyGroup } from '../../shared/constraints';
+import { AI_TURNS_PER_DAY, AI_TURNS_PER_DAY_ALL } from '../../shared/settings';
 import type { SessionResponse, TurnResponse } from '../../shared/ai';
 import { signIn } from './helpers/auth';
 
@@ -169,6 +170,56 @@ describe('AI sessions', () => {
     const res = await turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers);
     expect(res.status).toBe(429);
     expect(await res.json()).toMatchObject({ error: { code: 'AI_RATE_LIMITED' } });
+  });
+
+  const seedTurns = async (sessionId: number, memberId: number, n: number, at: string, kind = 'update') => {
+    const stmt = env.DB.prepare(`INSERT INTO ai_turns (session_id, created_by, kind, constraints_json, provider, created_at) VALUES (?1, ?2, ?3, '{}', 'none', ?4)`);
+    await env.DB.batch(Array.from({ length: n }, () => stmt.bind(sessionId, memberId, kind, at)));
+  };
+
+  // The turn is reserved before the LLM call in one statement, so parallel requests can't all slip under the limit.
+  it('parallel_turns_cannot_exceed_the_hourly_limit', async () => {
+    const busy = await signIn(env, { role: 'adviser' });
+    const e = await event();
+    const s = await start(e, busy.headers);
+    await seedTurns(s.session.id, busy.memberId!, 39, new Date().toISOString());
+    const before = llm.calls;
+    const res = await Promise.all(Array.from({ length: 5 }, () => turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers)));
+    expect(res.map((r) => r.status).sort()).toEqual([200, 429, 429, 429, 429]);
+    expect(llm.calls - before).toBe(1);
+  });
+
+  it('manual_edits_do_not_use_up_ai_turns', async () => {
+    const busy = await signIn(env, { role: 'adviser' });
+    const e = await event();
+    const s = await start(e, busy.headers);
+    await seedTurns(s.session.id, busy.memberId!, 40, new Date().toISOString(), 'manual_edit');
+    expect((await turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers)).status).toBe(200);
+  });
+
+  it('daily_cap_per_adviser_429', async () => {
+    const busy = await signIn(env, { role: 'adviser' });
+    const e = await event();
+    const s = await start(e, busy.headers);
+    await seedTurns(s.session.id, busy.memberId!, AI_TURNS_PER_DAY, new Date(Date.now() - 5 * 3_600_000).toISOString()); // outside the hour
+    const res = await turn(s.session.id, 'need 2', [e.shifts[0].id], busy.headers);
+    expect(res.status).toBe(429);
+    expect(await res.json()).toMatchObject({ error: { code: 'AI_RATE_LIMITED' } });
+  });
+
+  it('daily_cap_for_everyone_429', async () => {
+    const other = await signIn(env, { role: 'adviser' });
+    const e = await event();
+    const theirs = await start(e, other.headers);
+    const at = new Date(Date.now() - 5 * 3_600_000).toISOString();
+    await seedTurns(theirs.session.id, other.memberId!, AI_TURNS_PER_DAY_ALL, at);
+    try {
+      const fresh = await signIn(env, { role: 'adviser' });
+      const mine = await start(e, fresh.headers);
+      expect((await turn(mine.session.id, 'need 2', [e.shifts[0].id], fresh.headers)).status).toBe(429);
+    } finally {
+      await env.DB.prepare(`DELETE FROM ai_turns WHERE session_id = ?1`).bind(theirs.session.id).run();
+    }
   });
 
   it('other_adviser_cannot_post_to_session_403', async () => {

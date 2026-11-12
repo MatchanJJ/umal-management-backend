@@ -196,6 +196,20 @@ describe('status and visibility', () => {
     expect((await call('GET', `/events/${pub.id}`, undefined, member)).status).toBe(200);
   });
 
+  // The list feeds the events page, dashboard and settings with no dates; unbounded it would scan every event ever (D1 reads).
+  it('list_defaults_to_the_active_term_and_upcoming', async () => {
+    const old = await create(single('2026-12-05T08:00', '2026-12-05T12:00', { title: 'Last year' }));
+    const pastTerm = (await env.DB.prepare(`INSERT INTO terms (name, start_date, end_date, is_active, created_at) VALUES ('Old', '2025-01-06', '2025-05-30', 0, ?1) RETURNING id`)
+      .bind(NOW)
+      .first<{ id: number }>())!.id;
+    await env.DB.prepare(`UPDATE events SET term_id = ?2, start_at = '2025-02-01T08:00', end_at = '2025-02-01T12:00' WHERE id = ?1`).bind(old.id, pastTerm).run();
+    const current = await create(single('2026-12-06T08:00', '2026-12-06T12:00', { title: 'This term' }));
+    const ids = async (q: string) => ((await (await call('GET', `/events${q}`, undefined, adviser)).json()) as { items: EventOut[] }).items.map((e) => e.id);
+    expect(await ids('')).toContain(current.id);
+    expect(await ids('')).not.toContain(old.id);
+    expect(await ids('?from=2025-01-01')).toContain(old.id); // older history stays reachable with explicit dates
+  });
+
   it('unpublish_blocked_with_assignments_409', async () => {
     const e = await create(single('2026-12-03T08:00', '2026-12-03T12:00'));
     await call('PATCH', `/events/${e.id}`, { status: 'published', expectedVersion: 0 }, adviser);

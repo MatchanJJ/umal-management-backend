@@ -20,6 +20,7 @@ import { apiError } from '../errors';
 import { requireAdviser, requireMember } from '../middleware/auth';
 import { CreateAssignmentsInput } from '../../shared/assignments';
 import { ScoringWeights } from '../../shared/settings';
+import { manilaNow } from '../../shared/time';
 import { writeAssignments } from '../services/assignment-writer';
 import { auditStmt } from '../services/audit';
 import { startSession } from './ai';
@@ -109,8 +110,10 @@ export const events = new Hono<AppEnv>()
       q.status ? `status = ?1` : '?1 IS NULL',
       q.from ? `end_at >= ?2` : '?2 IS NULL',
       q.to ? `start_at <= ?3` : '?3 IS NULL',
+      // No dates → the active term plus anything not over yet, so the scan doesn't grow with all history (D1 reads).
+      q.from || q.to ? '?4 IS NOT NULL' : `(end_at >= ?4 OR term_id = (SELECT id FROM terms WHERE is_active = 1))`,
     ].join(' AND ');
-    const items = await readEvents(c.env.DB, where, [q.status ?? null, q.from ?? null, q.to ? `${q.to}T24:00` : null]);
+    const items = await readEvents(c.env.DB, where, [q.status ?? null, q.from ?? null, q.to ? `${q.to}T24:00` : null, manilaNow()]);
     return c.json({ items, total: items.length });
   })
 

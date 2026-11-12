@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAiHealth, useSaveSettings, useSettings } from '@/lib/api';
 import { stampManila } from '@/lib/format';
-import { SettingsPatch } from '../../../shared/settings';
+import { AI_TURNS_PER_DAY, AI_TURNS_PER_DAY_ALL, SettingsPatch } from '../../../shared/settings';
 
 function TurnsForm({ initial }: { initial: number }) {
   const save = useSaveSettings();
@@ -26,8 +26,11 @@ function TurnsForm({ initial }: { initial: number }) {
     <form onSubmit={submit} noValidate className="max-w-sm space-y-3">
       <Field data-invalid={!!error}>
         <FieldLabel htmlFor="turns">Chat turns per hour, per adviser</FieldLabel>
-        <Input id="turns" type="number" min={1} max={500} className="w-28" value={value} onChange={(e) => setValue(e.target.value)} />
-        <FieldDescription>Keeps the free AI tiers within their limits. Default 40.</FieldDescription>
+        <Input id="turns" type="number" min={1} max={100} className="w-28" value={value} onChange={(e) => setValue(e.target.value)} />
+        <FieldDescription>
+          Keeps the free AI tiers within their limits. Default 40, up to 100. Each adviser is also capped at {AI_TURNS_PER_DAY} turns a day, and
+          everyone together at {AI_TURNS_PER_DAY_ALL}.
+        </FieldDescription>
         {error && (
           <p role="alert" className="text-sm text-destructive">
             {error}

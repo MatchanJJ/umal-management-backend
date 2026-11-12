@@ -8,7 +8,7 @@ import { getDb } from '../db/client';
 import type { AppEnv } from '../env';
 import { apiError } from '../errors';
 import { requireApproved, requireMember, requireSession } from '../middleware/auth';
-import { isBootstrapAdviser, rerequestAt, type MemberRow } from '../services/access';
+import { ensureMember, isBootstrapAdviser, rerequestAt, type MemberRow } from '../services/access';
 import { auditInsert } from '../services/audit';
 import { validate } from '../validate';
 import { hoursBetween, manilaNow } from '../../shared/time';
@@ -45,11 +45,13 @@ export const me = new Hono<AppEnv>().get('/', async (c) => {
 
   const db = getDb(c.env);
   const { user } = session;
-  const [member, request, activeTerm] = await Promise.all([
+  const [found, request, activeTerm] = await Promise.all([
     db.select().from(schema.members).where(eq(schema.members.userId, user.id)).get(),
     db.select().from(schema.accessRequests).where(eq(schema.accessRequests.email, user.email)).get(),
     db.select().from(schema.terms).where(eq(schema.terms.isActive, true)).get(),
   ]);
+  // Approved but no member row (a bulk approval cut off midway): create it now instead of showing "pending" forever.
+  const member = found ?? (request?.status === 'approved' ? await ensureMember(db, user.email, request.role) : undefined);
 
   const accessStatus = request?.status ?? (member || isBootstrapAdviser(user.email, c.env) ? 'approved' : 'pending');
 
