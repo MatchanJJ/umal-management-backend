@@ -1,10 +1,11 @@
 // AssignAI sessions (TRD §6, §7, App Flow §7). A chat turn never writes assignments — only POST /events/:id/assignments does.
-// Turn budget (CLAUDE.md): 1 session statement + 9 loader statements + 2 writes = 12 D1 statements; ≤ 2 LLM calls.
+// Turn budget (CLAUDE.md): 1 reserve-and-read statement + 9 loader statements + 2 writes = 12 D1 statements; ≤ 2 LLM calls.
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { ConstraintsInput, TurnInput, type ResultDTO, type SessionResponse, type TurnDTO, type TurnResponse } from '../../shared/ai';
 import { Constraints, defaultConstraints, type Pins } from '../../shared/constraints';
 import { DAY_NAMES } from '../../shared/schedule';
+import { AI_TURNS_PER_DAY, AI_TURNS_PER_DAY_ALL, SETTINGS_DEFAULTS } from '../../shared/settings';
 import { interpret } from '../ai/interpret';
 import { providersFromEnv } from '../ai/providers';
 import { buildVocabulary } from '../ai/vocabulary';
@@ -15,6 +16,9 @@ import { apiError } from '../errors';
 import { requireAdviser } from '../middleware/auth';
 import { loadCandidates, type Loaded } from '../services/candidate-loader';
 import { validate } from '../validate';
+
+/** `error` of a turn reserved before its LLM call; cleared when the turn completes, so one left behind was cut off. */
+const UNFINISHED = 'Turn did not finish';
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
 type SessionRow = { id: number; event_id: number; created_by: number; status: 'open' | 'approved' | 'abandoned'; constraints_json: string; pins_json: string; scope_json: string };
@@ -163,29 +167,48 @@ export const aiSessions = new Hono<AppEnv>()
     const actor = c.get('member')!.id;
     const D = c.env.DB;
 
-    // 1 statement: session + this adviser's turns in the last hour + vocabulary + the last 3 turns (= last 6 messages).
-    const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
-    const s = await D.prepare(
-      `SELECT s.*,
-         (SELECT COUNT(*) FROM ai_turns WHERE created_by = ?2 AND created_at > ?3) AS recent,
+    // 1 statement: reserve this turn under the hourly, daily and app-wide caps (only on the adviser's own open session),
+    // returning the session, vocabulary and last 3 finished turns. One INSERT…SELECT is atomic in D1, so parallel requests
+    // can't all slip under a cap, and a turn cut off mid-LLM-call still counts.
+    const now = Date.now();
+    const since = (ms: number) => new Date(now - ms).toISOString();
+    const reserved = await D.prepare(
+      `INSERT INTO ai_turns (session_id, created_by, kind, user_message, constraints_json, provider, error, created_at)
+       SELECT s.id, ?2, 'clarify', ?3, '{}', 'none', '${UNFINISHED}', ?4 FROM ai_sessions s
+       WHERE s.id = ?1 AND s.created_by = ?2 AND s.status = 'open'
+         AND (SELECT COUNT(*) FROM ai_turns WHERE created_by = ?2 AND kind <> 'manual_edit' AND created_at > ?5)
+             < COALESCE((SELECT CAST(value_json AS INTEGER) FROM settings WHERE key = 'ai.turnsPerHour'), ?6)
+         AND (SELECT COUNT(*) FROM ai_turns WHERE created_by = ?2 AND kind <> 'manual_edit' AND created_at > ?7) < ?8
+         AND (SELECT COUNT(*) FROM ai_turns WHERE kind <> 'manual_edit' AND created_at > ?7) < ?9
+       RETURNING id,
+         (SELECT json_object('id', id, 'event_id', event_id, 'created_by', created_by, 'status', status, 'constraints_json', constraints_json,
+            'pins_json', pins_json, 'scope_json', scope_json) FROM ai_sessions WHERE id = ?1) AS session,
          (SELECT json_group_array(json_object('code', code, 'name', name)) FROM colleges WHERE active = 1) AS colleges,
          (SELECT json_group_array(json_object('u', user_message, 'r', reply)) FROM
-            (SELECT user_message, reply FROM ai_turns WHERE session_id = s.id AND user_message IS NOT NULL ORDER BY id DESC LIMIT 3)) AS history
-       FROM ai_sessions s WHERE s.id = ?1`,
+            (SELECT user_message, reply FROM ai_turns WHERE session_id = ?1 AND user_message IS NOT NULL AND error IS NOT '${UNFINISHED}' ORDER BY id DESC LIMIT 3)) AS history`,
     )
-      .bind(id, actor, hourAgo)
-      .first<SessionRow & { recent: number; colleges: string; history: string }>();
-    const blocked = guardSession(c, s, true);
-    if (blocked) return blocked;
-    const session = parseSession(s!);
+      .bind(id, actor, message, since(0), since(3_600_000), SETTINGS_DEFAULTS['ai.turnsPerHour'], since(86_400_000), AI_TURNS_PER_DAY, AI_TURNS_PER_DAY_ALL)
+      .first<{ id: number; session: string; colleges: string; history: string }>();
+    if (!reserved) {
+      // Error path only: say why (missing / not yours / closed), else it was a cap.
+      const blocked = guardSession(c, await D.prepare(`SELECT * FROM ai_sessions WHERE id = ?1`).bind(id).first<SessionRow>(), true);
+      return blocked ?? apiError(c, 429, 'AI_RATE_LIMITED', `You've reached the AssignAI limit (per hour, ${AI_TURNS_PER_DAY} a day, or the app-wide daily cap). Try again later.`);
+    }
+    const s = { ...(JSON.parse(reserved.session) as SessionRow), colleges: reserved.colleges, history: reserved.history };
+    const session = parseSession(s);
+    const unreserve = () => D.prepare(`DELETE FROM ai_turns WHERE id = ?1`).bind(reserved.id).run();
 
-    // 9 statements: facts for the scope (also yields settings for the rate limit).
-    const loaded = await loadCandidates(getDb(c.env), s!.event_id, { shiftIds: scope.shiftIds });
-    if (!loaded) return apiError(c, 404, 'NOT_FOUND', 'Event not found');
+    // 9 statements: facts for the scope.
+    const loaded = await loadCandidates(getDb(c.env), s.event_id, { shiftIds: scope.shiftIds });
+    if (!loaded) {
+      await unreserve();
+      return apiError(c, 404, 'NOT_FOUND', 'Event not found');
+    }
     const bad = checkScope(c, loaded, scope.shiftIds);
-    if (bad) return bad.res;
-    const turnsPerHour = loaded.settings['ai.turnsPerHour'];
-    if (s!.recent >= turnsPerHour) return apiError(c, 429, 'AI_RATE_LIMITED', `You've reached ${turnsPerHour} AssignAI turns this hour. Try again later.`);
+    if (bad) {
+      await unreserve();
+      return bad.res;
+    }
 
     const colleges = JSON.parse(s!.colleges) as { code: string; name: string }[];
     const history = (JSON.parse(s!.history) as { u: string; r: string | null }[]).reverse().flatMap((t) => [
@@ -215,24 +238,22 @@ export const aiSessions = new Hono<AppEnv>()
     const constraints = ai.output.kind === 'update' ? ai.output.constraints : session.constraints;
     const alloc = allocateShifts(loaded.facts, constraints, pins, loaded.shifts);
 
-    // 2 statements: log the turn, update the session. No assignment is written here.
-    const now = new Date().toISOString();
-    const [inserted] = await D.batch([
+    // 2 statements: complete the reserved turn, update the session. No assignment is written here.
+    await D.batch([
       D.prepare(
-        `INSERT INTO ai_turns (session_id, created_by, kind, user_message, reply, assumptions_json, constraints_json, provider, model, latency_ms, error, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12) RETURNING id`,
-      ).bind(id, actor, ai.output.kind, message, ai.output.reply, JSON.stringify(ai.output.assumptions), JSON.stringify(constraints), ai.provider, ai.model ?? null, ai.latencyMs, ai.error ?? null, now),
+        `UPDATE ai_turns SET kind = ?2, reply = ?3, assumptions_json = ?4, constraints_json = ?5, provider = ?6, model = ?7, latency_ms = ?8, error = ?9 WHERE id = ?1`,
+      ).bind(reserved.id, ai.output.kind, ai.output.reply, JSON.stringify(ai.output.assumptions), JSON.stringify(constraints), ai.provider, ai.model ?? null, ai.latencyMs, ai.error ?? null),
       D.prepare(`UPDATE ai_sessions SET constraints_json = ?2, pins_json = ?3, scope_json = ?4, last_result_json = ?5, updated_at = ?6 WHERE id = ?1`).bind(
         id,
         JSON.stringify(constraints),
         JSON.stringify(pins),
         JSON.stringify(scope),
         lastResultJson(alloc),
-        now,
+        new Date().toISOString(),
       ),
     ]);
     const body: TurnResponse = {
-      turn: { id: (inserted.results as { id: number }[])[0].id, reply: ai.output.reply, kind: ai.output.kind, assumptions: ai.output.assumptions, provider: ai.provider },
+      turn: { id: reserved.id, reply: ai.output.reply, kind: ai.output.kind, assumptions: ai.output.assumptions, provider: ai.provider },
       constraints,
       result: toResult(loaded, alloc),
       scope,

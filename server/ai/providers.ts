@@ -13,7 +13,10 @@ import { SchemaMismatch, type Provider } from './interpret';
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 export const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
 
-function provider(name: Provider['name'], modelId: string, model: LanguageModel): Provider {
+/** Ceiling on billed output per call. A full answer is a few hundred tokens; gpt-oss's reasoning also counts, hence the headroom. */
+export const MAX_OUTPUT_TOKENS = 2048;
+
+function provider(name: Provider['name'], modelId: string, model: LanguageModel, providerOptions?: Record<string, Record<string, string>>): Provider {
   return {
     name,
     model: modelId,
@@ -21,6 +24,8 @@ function provider(name: Provider['name'], modelId: string, model: LanguageModel)
       try {
         const { output } = await generateText({
           model,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          ...(providerOptions ? { providerOptions } : {}),
           system,
           messages,
           temperature: 0,
@@ -53,7 +58,8 @@ export function providersFromEnv(env: Env): Provider[] {
   if (env.GROQ_API_KEY) {
     const id = env.GROQ_MODEL || DEFAULT_GROQ_MODEL;
     const groq = createGroq({ apiKey: env.GROQ_API_KEY, ...(gateway ? { baseURL: `${gateway}/groq` } : {}) });
-    out.push(provider('groq', id, groq(id)));
+    // Only reasoning models accept reasoning_effort; 'low' keeps gpt-oss's hidden thinking (billed as output) short.
+    out.push(provider('groq', id, groq(id), id.startsWith('openai/gpt-oss') ? { groq: { reasoningEffort: 'low' } } : undefined));
   }
   return out;
 }

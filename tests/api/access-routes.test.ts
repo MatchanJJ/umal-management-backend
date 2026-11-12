@@ -47,6 +47,16 @@ describe('POST /api/access-requests/bulk', () => {
     expect(m).toEqual({ role: 'adviser' });
   });
 
+  // Bulk approve creates member rows one by one after committing the approvals; if that loop dies (D1 per-request query
+  // limit on a long list), the person is approved with no member row. Their next /api/me creates it.
+  it('approved_without_member_row_heals_on_me', async () => {
+    const stuck = await signIn(env, { access: 'pending' });
+    await env.DB.prepare(`UPDATE access_requests SET status = 'approved', role = 'adviser' WHERE email = ?1`).bind(stuck.email).run();
+    expect(await env.DB.prepare('SELECT id FROM members WHERE email = ?1').bind(stuck.email).first()).toBeNull();
+    const me = (await (await SELF.fetch('http://x/api/me', { headers: stuck.headers })).json()) as { accessStatus: string; onboarded: boolean; member: { role: string } | null };
+    expect(me).toMatchObject({ accessStatus: 'approved', onboarded: false, member: { role: 'adviser' } });
+  });
+
   it('bulk_handles_more_emails_than_d1_bind_limit', async () => {
     const emails = Array.from({ length: 250 }, (_, i) => `many${i}@umindanao.edu.ph`);
     const res = await post('/bulk', { emails, role: 'member' }, adviser);

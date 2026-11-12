@@ -93,7 +93,8 @@ export async function fairnessReport(D: D1Database, termId: number): Promise<Fai
 
 const CSV_COLUMNS = ['member_id', 'name', 'college', 'hours', 'shifts', 'attended', 'no_show', 'from_ai'];
 const cell = (v: unknown) => {
-  const s = v == null ? '' : String(v);
+  // Numbers stay numbers; member-entered text starting with = + - @ tab or CR gets a ' so spreadsheets show it, not run it.
+  const s = v == null ? '' : typeof v === 'number' ? String(v) : String(v).replace(/^[=+\-@\t\r]/, "'$&");
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

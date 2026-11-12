@@ -15,6 +15,13 @@
       "when": 1794323132858,
       "tag": "0001_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794488902719,
+      "tag": "0002_ai_turns_created_index",
+      "breakpoints": true
     }
   ]
 }

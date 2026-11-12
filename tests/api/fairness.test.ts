@@ -1,6 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { gini, topShare } from '../../server/services/fairness';
+import { fairnessCsv, gini, topShare } from '../../server/services/fairness';
 import type { FairnessReport } from '../../shared/reports';
 import { signIn } from './helpers/auth';
 
@@ -143,6 +143,21 @@ describe('GET /api/reports/fairness', () => {
     const lines = (await res.text()).trim().split('\r\n');
     expect(lines[0]).toBe('member_id,name,college,hours,shifts,attended,no_show,from_ai');
     expect(lines).toContain(`${m.memberId},"Ana, ""Jo"" Cruz",,4,1,1,0,0`);
+  });
+
+  // Names are member-entered: a leading = + - @ tab or CR would run as a formula when an adviser opens the file in Excel/Sheets.
+  it('csv_cells_that_look_like_formulas_are_neutralised', () => {
+    const row = (name: string) => ({ memberId: 1, name, college: '@CCE', hours: -2, shifts: 1, attended: 1, noShow: 0, fromAi: 0 });
+    const names = ['=HYPERLINK("https://x.example","go")', '+1+1', '-2', '@SUM(A1)', '\tTab', 'Ana Cruz'];
+    const lines = fairnessCsv({ members: names.map(row) } as unknown as FairnessReport).trim().split('\r\n').slice(1);
+    expect(lines).toEqual([
+      `1,"'=HYPERLINK(""https://x.example"",""go"")",'@CCE,-2,1,1,0,0`,
+      `1,'+1+1,'@CCE,-2,1,1,0,0`,
+      `1,'-2,'@CCE,-2,1,1,0,0`,
+      `1,'@SUM(A1),'@CCE,-2,1,1,0,0`,
+      `1,'\tTab,'@CCE,-2,1,1,0,0`,
+      `1,Ana Cruz,'@CCE,-2,1,1,0,0`,
+    ]);
   });
 
   it('unknown_term_404_and_term_required', async () => {

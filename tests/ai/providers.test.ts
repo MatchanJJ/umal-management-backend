@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_GEMINI_MODEL, DEFAULT_GROQ_MODEL, providersFromEnv } from '../../server/ai/providers';
+import { DEFAULT_GEMINI_MODEL, DEFAULT_GROQ_MODEL, MAX_OUTPUT_TOKENS, providersFromEnv } from '../../server/ai/providers';
 import type { Env } from '../../server/env';
 
 const env = (over: Partial<Env>) => ({ ENV: 'test', ...over }) as Env;
@@ -34,9 +34,14 @@ describe('provider call options', () => {
     }));
     vi.resetModules();
     const { providersFromEnv: fresh } = await import('../../server/ai/providers');
-    const [gemini] = fresh(env({ GEMINI_API_KEY: 'k' }));
-    await gemini.generate({ system: 's', messages: [], signal: new AbortController().signal });
-    expect(seen[0]).toMatchObject({ maxRetries: 0, temperature: 0 });
+    const [gemini, groq] = fresh(env({ GEMINI_API_KEY: 'k', GROQ_API_KEY: 'g' }));
+    const [llama] = fresh(env({ GROQ_API_KEY: 'g', GROQ_MODEL: 'llama-3.3-70b-versatile' }));
+    for (const p of [gemini, groq, llama]) await p.generate({ system: 's', messages: [], signal: new AbortController().signal });
+    // Every call has a hard output cap; the gpt-oss reasoning model also thinks briefly (its reasoning counts as output).
+    expect(seen[0]).toMatchObject({ maxRetries: 0, temperature: 0, maxOutputTokens: MAX_OUTPUT_TOKENS });
+    expect(seen[0].providerOptions).toBeUndefined();
+    expect(seen[1]).toMatchObject({ maxOutputTokens: MAX_OUTPUT_TOKENS, providerOptions: { groq: { reasoningEffort: 'low' } } });
+    expect(seen[2].providerOptions).toBeUndefined();
     vi.doUnmock('ai');
   });
 });

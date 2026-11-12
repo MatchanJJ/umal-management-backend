@@ -362,6 +362,7 @@ export const aiTurns = sqliteTable(
     check('ai_turns_provider', oneOf(t.provider, AI_PROVIDER)),
     index('ai_turns_session').on(t.sessionId, t.id),
     index('ai_turns_rate').on(t.createdBy, t.createdAt),
+    index('ai_turns_created').on(t.createdAt), // app-wide daily AI cap and AI health window
   ],
 );
 
