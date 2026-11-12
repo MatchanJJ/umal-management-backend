@@ -98,6 +98,49 @@ describe('PATCH /api/members/:id', () => {
   });
 });
 
+describe('deactivation', () => {
+  it('deactivation_cancels_future_assignments_only', async () => {
+    const m = await volunteer(farTermId);
+    const event = async (start: string, end: string, status: string) => {
+      const eventId = (await env.DB.prepare(
+        `INSERT INTO events (term_id, title, start_at, end_at, status, created_by, created_at, updated_at) VALUES (?1, 'E', ?2, ?3, ?4, ?5, ?6, ?6) RETURNING id`,
+      )
+        .bind(farTermId, start, end, status, adviserId, NOW)
+        .first<{ id: number }>())!.id;
+      const shiftId = (await env.DB.prepare(
+        `INSERT INTO shifts (event_id, label, start_at, end_at, required_volunteers, position, created_at, updated_at) VALUES (?1, 'Main', ?2, ?3, 5, 0, ?4, ?4) RETURNING id`,
+      )
+        .bind(eventId, start, end, NOW)
+        .first<{ id: number }>())!.id;
+      return { eventId, shiftId };
+    };
+    const assign = async (e: { eventId: number; shiftId: number }, status = 'assigned') =>
+      (await env.DB.prepare(
+        `INSERT INTO assignments (event_id, shift_id, member_id, status, source, assigned_by, assigned_at) VALUES (?1, ?2, ?3, ?4, 'manual', ?5, ?6) RETURNING id`,
+      )
+        .bind(e.eventId, e.shiftId, m.id, status, adviserId, NOW)
+        .first<{ id: number }>())!.id;
+    const [pub, draft, past] = [await event('2099-03-01T08:00', '2099-03-01T12:00', 'published'), await event('2099-03-02T08:00', '2099-03-02T12:00', 'draft'), await event('2026-01-10T08:00', '2026-01-10T12:00', 'completed')];
+    const [a1, a2, old] = [await assign(pub), await assign(draft), await assign(past, 'attended')];
+
+    expect((await call('PATCH', `/members/${m.id}`, { status: 'inactive' })).status).toBe(200);
+    const row = (id: number) => env.DB.prepare(`SELECT status, cancel_reason AS reason, cancelled_by AS by FROM assignments WHERE id = ?1`).bind(id).first();
+    expect(await row(a1)).toEqual({ status: 'cancelled', reason: 'Member deactivated', by: adviserId });
+    expect(await row(a2)).toMatchObject({ status: 'cancelled' });
+    expect(await row(old)).toMatchObject({ status: 'attended' }); // history untouched
+    expect(await env.DB.prepare(`SELECT version FROM events WHERE id = ?1`).bind(pub.eventId).first()).toEqual({ version: 1 }); // roster change bumps the version
+    const audits = await env.DB.prepare(`SELECT entity_id AS id, data_json AS data FROM audit_log WHERE action = 'assignment.cancel' AND entity_id IN (?1, ?2) ORDER BY entity_id`).bind(a1, a2).all<{ id: number; data: string }>();
+    expect(audits.results.map((r) => [r.id, JSON.parse(r.data)])).toEqual([
+      [a1, { eventId: pub.eventId, reason: 'Member deactivated' }],
+      [a2, { eventId: draft.eventId, reason: 'Member deactivated' }],
+    ]);
+
+    // Reactivating doesn't bring the shifts back.
+    expect((await call('PATCH', `/members/${m.id}`, { status: 'active' })).status).toBe(200);
+    expect(await row(a1)).toMatchObject({ status: 'cancelled' });
+  });
+});
+
 describe('GET /api/members', () => {
   it('directory_filters_and_detail', async () => {
     const m = await volunteer(termId, `z.dir.${100000 + Math.floor(Math.random() * 899999)}@umindanao.edu.ph`);

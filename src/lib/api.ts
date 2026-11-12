@@ -198,7 +198,8 @@ export function useUpdateMember(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (json: MemberPatch) => unwrap<MemberDTO>(await client.api.members[':id'].$patch({ param: { id: String(id) }, json })),
-    onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: ['member', id] }), qc.invalidateQueries({ queryKey: ['members'] })]),
+    // Deactivation also cancels future shifts, so rosters and the dashboard change too.
+    onSettled: () => Promise.all(['member', 'members', 'events', 'event', 'roster', 'dashboard'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
   });
 }
 

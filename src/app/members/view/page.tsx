@@ -15,11 +15,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useMember, useUpdateMember } from '@/lib/api';
 import { hoursLabel, shiftWhen } from '@/lib/format';
 import type { MemberDetail, MemberPatch } from '../../../../shared/api';
+import { manilaNow } from '../../../../shared/time';
 
 type Action = { patch: MemberPatch; title: string; body: string; confirm: string; destructive?: boolean };
 
 function actionsFor(d: MemberDetail, name: string): Action[] {
   const m = d.member;
+  // Same rule as the server: not-yet-started shifts still marked assigned (history is capped at 100, newest first).
+  const now = manilaNow();
+  const upcoming = d.assignments.filter((a) => a.status === 'assigned' && a.startAt > now).length;
   return [
     m.role === 'member'
       ? { patch: { role: 'adviser' }, title: `Make ${name} an adviser?`, body: 'Advisers can manage members, events, assignments, settings and the audit log.', confirm: 'Make adviser' }
@@ -28,7 +32,10 @@ function actionsFor(d: MemberDetail, name: string): Action[] {
       ? {
           patch: { status: 'inactive' },
           title: `Deactivate ${name}?`,
-          body: "They can't sign in or be assigned. Existing assignments stay; cancel them from each event if needed.",
+          body:
+            upcoming > 0
+              ? `They can't sign in or be assigned, and they're removed from their ${upcoming} upcoming ${upcoming === 1 ? 'shift' : 'shifts'} (reason "Member deactivated"). Reactivating won't bring those shifts back.`
+              : "They can't sign in or be assigned.",
           confirm: 'Deactivate',
           destructive: true,
         }
