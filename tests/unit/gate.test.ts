@@ -34,6 +34,19 @@ describe('homeFor', () => {
   });
 });
 
+// App Flow §2: onboarding "then redirect to /me/schedule". The form unmounts when `me` refreshes, so the gate does it.
+describe('leaving onboarding', () => {
+  const term = { id: 1, name: 'T', startDate: '2026-08-01', endDate: '2026-12-15', isActive: true };
+  it.each<[string, MeState, string]>([
+    ['member, schedule missing', me({ activeTerm: term, scheduleSubmitted: false }), '/me/schedule/'],
+    ['member, schedule submitted', me({ activeTerm: term }), '/me/'],
+    ['member, no active term', me({ scheduleSubmitted: false }), '/me/'],
+    ['adviser', me({ role: 'adviser', activeTerm: term, scheduleSubmitted: false }), '/dashboard/'],
+  ])('%s → %s', (_label, state, to) => {
+    expect(gateDecision(state, 'onboarding')).toEqual({ kind: 'redirect', to });
+  });
+});
+
 describe('gateDecision', () => {
   const cases: [string, MeState, GateRequirement, ReturnType<typeof gateDecision>][] = [
     ['member page, member', me(), 'member', { kind: 'render' }],

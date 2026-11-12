@@ -26,7 +26,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm vitest run
       - run: pnpm test:engine
-      - run: pnpm next build
+      - run: pnpm build # next build + per-page CSP script hashes in out/_headers
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
