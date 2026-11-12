@@ -11,3 +11,9 @@ export function shiftWhen(startAt: string, endAt: string): string {
 export function hoursLabel(h: number): string {
   return `${Number.isInteger(h) ? h : h.toFixed(1)} h`;
 }
+
+const stamp = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Manila' });
+/** A stored UTC instant (audit rows) shown in Manila time: 'Nov 21, 2026, 14:05'. */
+export function stampManila(iso: string): string {
+  return stamp.format(new Date(iso));
+}

@@ -3,10 +3,27 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hc, type InferRequestType } from 'hono/client';
 import type { AppType } from '../../server/app';
-import type { AccessRequestDTO, BulkAccessResult, MeResponse, MemberDTO, Paged, TermDTO } from '../../shared/api';
+import type {
+  AccessRequestDTO,
+  AiHealth,
+  AuditItem,
+  AuditQuery,
+  BulkAccessResult,
+  DashboardResponse,
+  MeResponse,
+  MemberDetail,
+  MemberDTO,
+  MemberListItem,
+  MemberListQuery,
+  MemberPatch,
+  Paged,
+  TermDTO,
+} from '../../shared/api';
 import type { CatalogResponse, OnboardingInput, ProfileInput } from '../../shared/profile';
 import type { ClassEntry, ScheduleResponse, UnavailabilityDTO } from '../../shared/schedule';
 import type { Settings } from '../../shared/settings';
+
+type Weights = Settings['scoring.weights'];
 import type { AssignmentDTO, CreateAssignmentsInput, MarkAttendanceInput } from '../../shared/assignments';
 import type { EventDTO, EventInput, EventPatch } from '../../shared/events';
 import type { FairnessReport } from '../../shared/reports';
@@ -154,6 +171,52 @@ export function useFairness(termId: number | null) {
     enabled: termId !== null,
     queryFn: async () => unwrap<FairnessReport>(await client.api.reports.fairness.$get({ query: { termId: String(termId) } })),
   });
+}
+
+// ── Members, audit, dashboard (Task 6.3) ───────────────────────────────────
+type Query = Record<string, string | number | undefined>;
+/** Drops empty filters and stringifies the rest for the RPC client. */
+const qs = (q: Query) => Object.fromEntries(Object.entries(q).flatMap(([k, v]) => (v === undefined || v === '' ? [] : [[k, String(v)]])));
+
+export function useMembers(q: Omit<MemberListQuery, 'page' | 'pageSize'> & { page?: number }) {
+  return useQuery({
+    queryKey: ['members', q],
+    placeholderData: (prev) => prev,
+    queryFn: async () => unwrap<Paged<MemberListItem>>(await client.api.members.$get({ query: qs(q) })),
+  });
+}
+
+export function useMember(id: number | null) {
+  return useQuery({
+    queryKey: ['member', id],
+    enabled: id !== null,
+    queryFn: async () => unwrap<MemberDetail>(await client.api.members[':id'].$get({ param: { id: String(id) } })),
+  });
+}
+
+export function useUpdateMember(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (json: MemberPatch) => unwrap<MemberDTO>(await client.api.members[':id'].$patch({ param: { id: String(id) }, json })),
+    // Deactivation also cancels future shifts, so rosters and the dashboard change too.
+    onSettled: () => Promise.all(['member', 'members', 'events', 'event', 'roster', 'dashboard'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
+  });
+}
+
+export function useAudit(q: Omit<AuditQuery, 'page' | 'pageSize'> & { page?: number }) {
+  return useQuery({
+    queryKey: ['audit', q],
+    placeholderData: (prev) => prev,
+    queryFn: async () => unwrap<Paged<AuditItem>>(await client.api.audit.$get({ query: qs(q) })),
+  });
+}
+
+export function useDashboard() {
+  return useQuery({ queryKey: ['dashboard'], queryFn: async () => unwrap<DashboardResponse>(await client.api.reports.dashboard.$get()) });
+}
+
+export function useAiHealth() {
+  return useQuery({ queryKey: ['ai-health'], queryFn: async () => unwrap<AiHealth>(await client.api.reports['ai-health'].$get()) });
 }
 
 function useInvalidate(...keys: string[][]) {
@@ -360,13 +423,13 @@ export function useCancelEvent(id: number) {
   });
 }
 
-export function useCandidates(eventId: number, shiftId: number | null, search: string) {
+export function useCandidates(eventId: number, shiftId: number | null, search: string, weights?: Weights) {
   return useQuery({
-    queryKey: ['candidates', eventId, shiftId, search],
+    queryKey: ['candidates', eventId, shiftId, search, weights],
     enabled: shiftId !== null,
     queryFn: async () =>
       unwrap<{ items: Candidate[] }>(
-        await client.api.events[':id'].candidates.$get({ param: { id: String(eventId) }, query: { shiftId: String(shiftId), ...(search ? { search } : {}) } }),
+        await client.api.events[':id'].candidates.$get({ param: { id: String(eventId) }, query: { shiftId: String(shiftId), ...(search ? { search } : {}), ...(weights ? { weights: `${weights.load},${weights.recency},${weights.reliability}` } : {}) } }),
       ),
   });
 }

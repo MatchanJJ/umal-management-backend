@@ -7,6 +7,7 @@ import { Suspense, useState } from 'react';
 import { toast } from 'sonner';
 import { eventSpan } from '@/components/events/EventList';
 import { AssignAITab } from '@/components/assignai/AssignAITab';
+import { AuditTable } from '@/components/audit/AuditTable';
 import { AttendanceTab } from '@/components/events/AttendanceTab';
 import { RosterTab } from '@/components/events/RosterTab';
 import { StaffingBar } from '@/components/events/StaffingBar';
@@ -164,9 +165,8 @@ function View({ adviser }: { adviser: boolean }) {
           <TabsContent value="attendance">
             <AttendanceTab event={event} />
           </TabsContent>
-          {/* Activity arrives in Task 6.3. */}
           <TabsContent value="activity">
-            <p className="text-sm text-muted-foreground">The activity log is coming in a later update.</p>
+            <AuditTable eventId={event.id} />
           </TabsContent>
         </Tabs>
       ) : (

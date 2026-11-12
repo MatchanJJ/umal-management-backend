@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const halfStep = z.number().min(0).max(10).multipleOf(0.5);
+export const ScoringWeights = z.object({ load: halfStep, recency: halfStep, reliability: halfStep }).strict();
 
 /** Settings keys, value types and ranges (Backend Schema §6). Every key is optional in a PUT. */
 export const SettingsPatch = z
@@ -12,7 +13,7 @@ export const SettingsPatch = z
       .regex(/^[a-z0-9.-]+\.[a-z]{2,}$/, 'Enter a domain like umindanao.edu.ph')
       .nullable(),
     'assignment.requireSchedule': z.boolean(),
-    'scoring.weights': z.object({ load: halfStep, recency: halfStep, reliability: halfStep }).strict(),
+    'scoring.weights': ScoringWeights,
     'scoring.loadUnitHours': z.number().min(1).max(12),
     'ai.turnsPerHour': z.number().int().min(1).max(500),
     'schoolYear.startMonth': z.number().int().min(1).max(12),
