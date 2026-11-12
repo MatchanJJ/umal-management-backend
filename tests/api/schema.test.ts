@@ -47,6 +47,16 @@ describe('schema', () => {
     expect(codes).toContain('CLE');
   });
 
+  it('seed_has_um_courses_without_professional_schools', async () => {
+    const { results } = await db()
+      .prepare(`SELECT c.code AS college, COUNT(*) AS n FROM courses k JOIN colleges c ON c.id = k.college_id GROUP BY c.code ORDER BY c.code`)
+      .all<{ college: string; n: number }>();
+    expect(Object.fromEntries(results.map((r) => [r.college, r.n]))).toEqual({
+      CAE: 3, CAFAE: 3, CASE: 9, CBAE: 8, CCE: 5, CCJE: 1, CEE: 9, CHE: 2, CHSE: 4, CTE: 8, TS: 4,
+    }); // no CLE (law) or PS (graduate) programs
+    expect(await db().prepare(`SELECT name FROM colleges WHERE code = 'CHSE'`).first()).toEqual({ name: 'College of Health Sciences Education' });
+  });
+
   it('seed_has_settings_defaults', async () => {
     const { results } = await db().prepare('SELECT key, value_json FROM settings ORDER BY key').all<{ key: string; value_json: string }>();
     expect(Object.fromEntries(results.map((r) => [r.key, JSON.parse(r.value_json)]))).toEqual({

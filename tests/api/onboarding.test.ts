@@ -11,7 +11,7 @@ beforeAll(async () => {
     env.DB.prepare('SELECT id FROM colleges WHERE code = ?1').bind(code).first<{ id: number }>().then((r) => r!.id);
   cceId = await col('CCE');
   caeId = await col('CAE');
-  await env.DB.prepare(`INSERT INTO courses (college_id, code, name, created_at) VALUES (?1, 'BSCS', 'BS Computer Science', '2026-11-10T00:00:00.000Z')`)
+  await env.DB.prepare(`INSERT OR IGNORE INTO courses (college_id, code, name, created_at) VALUES (?1, 'BSCS', 'BS Computer Science', '2026-11-10T00:00:00.000Z')`)
     .bind(cceId)
     .run();
   bscsId = (await env.DB.prepare(`SELECT id FROM courses WHERE code = 'BSCS'`).first<{ id: number }>())!.id;
@@ -153,6 +153,6 @@ describe('GET /api/catalog', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { colleges: { code: string; courses: { code: string }[] }[] };
     expect(body.colleges).toHaveLength(14);
-    expect(body.colleges.find((c) => c.code === 'CCE')?.courses.map((c) => c.code)).toEqual(['BSCS']);
+    expect(body.colleges.find((c) => c.code === 'CCE')?.courses.map((c) => c.code)).toEqual(['BLIS', 'BMMA', 'BSCS', 'BSEMC-GD', 'BSIT']); // seeded catalog (migration 0003)
   });
 });

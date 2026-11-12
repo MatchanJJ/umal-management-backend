@@ -337,7 +337,7 @@ Colleges, from the academic units listed on umindanao.edu.ph (2026-11-10):
 | CCJE | College of Criminal Justice Education |
 | CEE | College of Engineering Education |
 | CHE | College of Hospitality Education |
-| CHSE | College of Health and Sciences Education |
+| CHSE | College of Health Sciences Education |
 | CTE | College of Teacher Education |
 | CLE | College of Legal Education |
 | PS | Professional Schools |

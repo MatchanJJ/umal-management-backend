@@ -93,8 +93,8 @@ describe('catalog', () => {
 
   it('duplicate_course_code_in_college_409', async () => {
     const cce = (await env.DB.prepare(`SELECT id FROM colleges WHERE code = 'CCE'`).first<{ id: number }>())!.id;
-    expect((await send('POST', '/catalog/courses', { collegeId: cce, code: 'BSIT', name: 'BS IT' }, adviser)).status).toBe(201);
-    const dup = await send('POST', '/catalog/courses', { collegeId: cce, code: 'BSIT', name: 'Again' }, adviser);
+    expect((await send('POST', '/catalog/courses', { collegeId: cce, code: 'BSIT-X', name: 'BS IT' }, adviser)).status).toBe(201);
+    const dup = await send('POST', '/catalog/courses', { collegeId: cce, code: 'BSIT-X', name: 'Again' }, adviser);
     expect(dup.status).toBe(409);
     expect(await env.DB.prepare(`SELECT COUNT(*) AS n FROM audit_log WHERE action = 'catalog.update'`).first()).toMatchObject({
       n: expect.any(Number),
