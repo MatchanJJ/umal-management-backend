@@ -39,6 +39,25 @@ export function findOverlap<T extends Pick<ClassEntry, 'dayOfWeek' | 'startTime'
 
 export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 
+/** UM registrar day codes (as printed on the study load) → ISO weekdays. A class is entered once and plotted on each day. */
+export const DAY_CODES = [
+  { code: 'M-Sa', hint: 'Mon–Sat', days: [1, 2, 3, 4, 5, 6] },
+  { code: 'M-SA1', hint: 'Mon–Wed', days: [1, 2, 3] },
+  { code: 'M-SA2', hint: 'Thu–Sat', days: [4, 5, 6] },
+  { code: 'Mon', hint: 'Monday', days: [1] },
+  { code: 'Tue', hint: 'Tuesday', days: [2] },
+  { code: 'Wed', hint: 'Wednesday', days: [3] },
+  { code: 'Thu', hint: 'Thursday', days: [4] },
+  { code: 'Fri', hint: 'Friday', days: [5] },
+  { code: 'Sa', hint: 'Saturday', days: [6] },
+] as const;
+export type DayCode = (typeof DAY_CODES)[number]['code'];
+
+/** One class row per weekday the code covers (storage stays per day, so conflicts and the engine are unchanged). */
+export function entriesForDayCode<T extends Omit<ClassEntry, 'dayOfWeek'>>(code: DayCode, entry: T): (T & { dayOfWeek: number })[] {
+  return DAY_CODES.find((d) => d.code === code)!.days.map((dayOfWeek) => ({ ...entry, dayOfWeek }));
+}
+
 // ── Unavailability (FR-8) ─────────────────────────────────────────────────
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const blockTimes = {
