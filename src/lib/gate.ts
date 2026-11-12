@@ -45,6 +45,11 @@ export function gateDecision(s: MeState, req: GateRequirement): GateDecision {
       return home;
     case 'onboarded':
       return state === 'member' || state === 'adviser' ? { kind: 'render' } : home;
+    case 'onboarding':
+      if (state === 'onboarding') return { kind: 'render' };
+      // Just finished onboarding (App Flow §2): straight to the schedule if the active term still needs one.
+      if (state === 'member' && s.kind === 'signed_in' && s.me.activeTerm && !s.me.scheduleSubmitted) return { kind: 'redirect', to: '/me/schedule/' };
+      return home;
     case 'member':
     case 'adviser':
       if (state === req) return { kind: 'render' };
