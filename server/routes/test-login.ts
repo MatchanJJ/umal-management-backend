@@ -12,18 +12,27 @@ import { apiError } from '../errors';
 import { validate } from '../validate';
 
 // onboarded: false leaves the profile empty so a test can walk through onboarding itself.
-const TestLoginInput = z.object({ email: z.email(), role: z.enum(ROLES), firstName: z.string().max(60).optional(), onboarded: z.boolean().default(true) }).strict();
+// access: 'pending' skips the pre-approval, so the real sign-in hook files a pending request (e2e of the access queue).
+const TestLoginInput = z
+  .object({
+    email: z.email(),
+    role: z.enum(ROLES),
+    firstName: z.string().max(60).optional(),
+    onboarded: z.boolean().default(true),
+    access: z.enum(['approved', 'pending']).default('approved'),
+  })
+  .strict();
 
 export const testLogin = new Hono<AppEnv>().post('/login', async (c, next) => {
   if (c.env.ENV !== 'local' && c.env.ENV !== 'test') return apiError(c, 404, 'NOT_FOUND', 'Not found');
   await next();
 }, validate('json', TestLoginInput), async (c) => {
-  const { email, role, firstName, onboarded } = c.req.valid('json');
+  const { email, role, firstName, onboarded, access } = c.req.valid('json');
   const D = c.env.DB;
   const now = new Date().toISOString();
 
   // Pre-approve, then create the user through the real sign-in hooks (user.create.after → member row).
-  await D.prepare(
+  if (access === 'approved') await D.prepare(
     `INSERT INTO access_requests (email, status, role, source, created_at) VALUES (?1, 'approved', ?2, 'bulk', ?3)
      ON CONFLICT (email) DO UPDATE SET status = 'approved', role = excluded.role`,
   )
@@ -34,7 +43,7 @@ export const testLogin = new Hono<AppEnv>().post('/login', async (c, next) => {
   const userId = existing?.id ?? (await test.saveUser(test.createUser({ email, name: firstName ?? email.split('@')[0] }))).id;
 
   // Minimal onboarded profile + an (empty) submitted schedule for the active term, so the member is assignable.
-  if (onboarded) await D.batch([
+  if (onboarded && access === 'approved') await D.batch([
     D.prepare(
       `UPDATE members SET first_name = COALESCE(first_name, ?2), last_name = COALESCE(last_name, 'Tester'), gender = COALESCE(gender, 'F'),
          college_id = COALESCE(college_id, (SELECT id FROM colleges WHERE code = 'CCE')), year_level = COALESCE(year_level, 2),
