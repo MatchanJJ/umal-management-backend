@@ -7,6 +7,7 @@ import { accessRequests } from './routes/access';
 import { aiSessions } from './routes/ai';
 import { assignments } from './routes/assignments';
 import { attendance } from './routes/attendance';
+import { audit } from './routes/audit';
 import { catalog } from './routes/catalog';
 import { events } from './routes/events';
 import { me } from './routes/me';
@@ -46,6 +47,7 @@ export const routes = app
   .route('/settings', settings)
   .route('/terms', terms)
   .route('/test', testLogin)
-  .route('/reports', reports);
+  .route('/reports', reports)
+  .route('/audit', audit);
 
 export type AppType = typeof routes;

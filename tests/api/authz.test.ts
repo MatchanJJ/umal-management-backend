@@ -11,7 +11,11 @@ const MATRIX: Row[] = [
   { capability: 'events CRUD', method: 'POST', path: '/api/events', body: {}, member: 403, adviser: 400 },
   { capability: 'attendance', method: 'PUT', path: '/api/events/1/attendance', body: {}, member: 403, adviser: 400 },
   { capability: 'access requests', method: 'GET', path: '/api/access-requests', member: 403, adviser: 200 },
-  { capability: 'role changes', method: 'PATCH', path: '/api/members/1', body: { role: 'adviser' }, member: 403, adviser: 200 },
+  // Member 1 is the member signed in first; a no-op role change keeps later rows valid.
+  { capability: 'role changes', method: 'PATCH', path: '/api/members/1', body: { role: 'member' }, member: 403, adviser: 200 },
+  { capability: 'members directory', method: 'GET', path: '/api/members', member: 403, adviser: 200 },
+  { capability: 'audit log', method: 'GET', path: '/api/audit', member: 403, adviser: 200 },
+  { capability: 'dashboard', method: 'GET', path: '/api/reports/dashboard', member: 403, adviser: 200 },
   { capability: 'settings', method: 'PUT', path: '/api/settings', body: {}, member: 403, adviser: 200 },
   { capability: 'fairness report', method: 'GET', path: '/api/reports/fairness', member: 403, adviser: 400 },
 ];

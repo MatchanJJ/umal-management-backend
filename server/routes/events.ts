@@ -19,6 +19,7 @@ import type { AppEnv } from '../env';
 import { apiError } from '../errors';
 import { requireAdviser, requireMember } from '../middleware/auth';
 import { CreateAssignmentsInput } from '../../shared/assignments';
+import { ScoringWeights } from '../../shared/settings';
 import { writeAssignments } from '../services/assignment-writer';
 import { auditStmt } from '../services/audit';
 import { startSession } from './ai';
@@ -28,7 +29,18 @@ import { guardedBatch } from '../services/write-guard';
 import { validate } from '../validate';
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
-const CandidatesQuery = z.object({ shiftId: z.coerce.number().int().positive(), search: z.string().trim().max(80).optional() });
+// `weights=load,recency,reliability` previews draft scoring weights (Settings → Scoring) without saving them.
+const CandidatesQuery = z.object({
+  shiftId: z.coerce.number().int().positive(),
+  search: z.string().trim().max(80).optional(),
+  weights: z
+    .string()
+    .transform((s) => s.split(',').map(Number))
+    .pipe(z.tuple([z.number(), z.number(), z.number()]))
+    .transform(([load, recency, reliability]) => ({ load, recency, reliability }))
+    .pipe(ScoringWeights)
+    .optional(),
+});
 type NewShift = Omit<ShiftInput, 'id'>;
 type EventRow = Omit<EventDTO, 'shifts'>;
 
@@ -320,7 +332,7 @@ export const events = new Hono<AppEnv>()
   // Manual-add dialog (App Flow §6): every active member with their eligibility and score for one shift.
   .get('/:id/candidates', ...requireAdviser, validate('param', IdParam), validate('query', CandidatesQuery), async (c) => {
     const { id } = c.req.valid('param');
-    const { shiftId, search } = c.req.valid('query');
+    const { shiftId, search, weights } = c.req.valid('query');
     const loaded = await loadCandidates(getDb(c.env), id, { shiftIds: [shiftId] });
     const shift = loaded?.shifts[0];
     if (!loaded || !shift) return apiError(c, 404, 'NOT_FOUND', 'Shift not found on this event');
@@ -334,7 +346,7 @@ export const events = new Hono<AppEnv>()
       ).results.map((p) => [p.id, p]),
     );
     const needle = search?.toLowerCase();
-    const scoreCtx = { avgTermHours: averageHours(loaded.facts), loadUnitHours: shift.loadUnitHours, today: shift.today, weights: shift.weights };
+    const scoreCtx = { avgTermHours: averageHours(loaded.facts), loadUnitHours: shift.loadUnitHours, today: shift.today, weights: weights ?? shift.weights };
     const items = loaded.facts
       .map((f) => {
         const p = people.get(f.memberId)!;
