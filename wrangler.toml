@@ -9,9 +9,31 @@ database_name = "umal-preview"
 database_id = "71772ede-8cba-4edc-b71c-e1edd61e41c6"
 migrations_dir = "migrations"
 
+# Plain-text runtime vars live here (Pages ignores dashboard text vars when this file exists).
+# Secrets stay in the dashboard: BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, BOOTSTRAP_ADVISER_EMAIL, GEMINI_API_KEY, GROQ_API_KEY.
+# No top-level [vars]: local dev (.dev.vars) and the vitest pool read the top level.
+
+[env.preview]
+# Bindings don't inherit into an env section, so preview repeats its DB.
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "umal-preview"
+database_id = "71772ede-8cba-4edc-b71c-e1edd61e41c6"
+migrations_dir = "migrations"
+
+[env.preview.vars]
+ENV = "preview"
+BETTER_AUTH_URL = "https://uat.umal-management.pages.dev"
+GOOGLE_CLIENT_ID = "1063587416035-84kf9q6o33c531t3tqggo6or7rsusi46.apps.googleusercontent.com"
+
 [env.production]
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "umal-prod"
 database_id = "bb47b6fa-802e-4b6e-8f59-f340253654d9"
 migrations_dir = "migrations"
+
+[env.production.vars]
+ENV = "production"
+BETTER_AUTH_URL = "https://umal-management.pages.dev"
+GOOGLE_CLIENT_ID = "1063587416035-84kf9q6o33c531t3tqggo6or7rsusi46.apps.googleusercontent.com"
