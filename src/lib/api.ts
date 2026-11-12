@@ -9,6 +9,7 @@ import type { ClassEntry, ScheduleResponse, UnavailabilityDTO } from '../../shar
 import type { Settings } from '../../shared/settings';
 import type { AssignmentDTO, CreateAssignmentsInput, MarkAttendanceInput } from '../../shared/assignments';
 import type { EventDTO, EventInput, EventPatch } from '../../shared/events';
+import type { FairnessReport } from '../../shared/reports';
 import type { SessionResponse, TurnResponse } from '../../shared/ai';
 import type { Constraints, Pins } from '../../shared/constraints';
 import type { AccessStatus, Role } from '../../shared/enums';
@@ -145,6 +146,14 @@ export function useUpdateProfile() {
 // ── Settings: terms, catalog, general (adviser) ───────────────────────────
 export function useTerms() {
   return useQuery({ queryKey: ['terms'], queryFn: async () => unwrap<TermDTO[]>(await client.api.terms.$get()) });
+}
+
+export function useFairness(termId: number | null) {
+  return useQuery({
+    queryKey: ['fairness', termId],
+    enabled: termId !== null,
+    queryFn: async () => unwrap<FairnessReport>(await client.api.reports.fairness.$get({ query: { termId: String(termId) } })),
+  });
 }
 
 function useInvalidate(...keys: string[][]) {
