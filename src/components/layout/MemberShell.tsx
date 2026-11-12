@@ -1,6 +1,7 @@
 'use client';
 
 import { MenuIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
@@ -62,8 +63,8 @@ export function MemberShell({ me, title, children }: { me: MeResponse; title: st
               <NavLinks vertical onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
-          <Link href="/me/" className="leading-tight">
-            <span className="block text-base font-bold text-primary">UMAL</span>
+          <Link href="/me/" className="flex flex-col gap-0.5 leading-tight">
+            <Image src="/brand/umal-logo.png" alt="UMAL home" width={381} height={120} className="h-7 w-auto" />
             <span className="hidden text-[11px] font-medium text-muted-foreground sm:block">University of Mindanao</span>
           </Link>
           <div className="hidden flex-1 justify-center md:flex">
