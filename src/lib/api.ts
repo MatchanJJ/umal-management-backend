@@ -233,6 +233,15 @@ export function useCreateTerm() {
   });
 }
 
+export function useUpdateTerm() {
+  const onSuccess = useInvalidate(['terms'], ['me']);
+  return useMutation({
+    mutationFn: async ({ id, ...json }: { id: number; name: string; startDate: string; endDate: string }) =>
+      unwrap<TermDTO>(await client.api.terms[':id'].$patch({ param: { id: String(id) }, json })),
+    onSuccess,
+  });
+}
+
 export function useActivateTerm() {
   const onSuccess = useInvalidate(['terms'], ['me']);
   return useMutation({

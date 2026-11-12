@@ -51,6 +51,23 @@ describe('terms', () => {
     expect((await send('PATCH', `/terms/${t.body.id}`, { name: 'Summer Term 2027' }, adviser)).status).toBe(200);
   });
 
+  // Terms get extended (make-up classes, typhoon suspensions), so advisers edit the dates and name in place.
+  it('patch_extends_end_date_and_renames', async () => {
+    const t = await createTerm('Midyear 2028', '2028-06-01', '2028-07-15');
+    const res = await send('PATCH', `/terms/${t.body.id}`, { name: 'Midyear 2028 (extended)', endDate: '2028-07-31' }, adviser);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ name: 'Midyear 2028 (extended)', startDate: '2028-06-01', endDate: '2028-07-31' });
+  });
+
+  it('patch_rename_to_existing_name_409', async () => {
+    await createTerm('Taken 2029', '2029-01-05', '2029-02-05');
+    const t = await createTerm('Other 2029', '2029-03-05', '2029-04-05');
+    const res = await send('PATCH', `/terms/${t.body.id}`, { name: 'Taken 2029' }, adviser);
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ error: { code: 'CONFLICT' } });
+    expect((await send('PATCH', `/terms/${t.body.id}`, { name: 'Other 2029', endDate: '2029-04-20' }, adviser)).status).toBe(200); // own name is fine
+  });
+
   it('end_before_start_400', async () => {
     const res = await send('POST', '/terms', { name: 'Bad', startDate: '2028-05-01', endDate: '2028-04-01' }, adviser);
     expect(res.status).toBe(400);

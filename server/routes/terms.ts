@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { TermInput, TermPatch } from '../../shared/settings';
@@ -46,6 +46,9 @@ export const terms = new Hono<AppEnv>()
     }
     const clash = await overlappingTerm(db, next.startDate, next.endDate, id);
     if (clash) return apiError(c, 422, 'VALIDATION', `Overlaps ${clash.name}`, { field: 'startDate' });
+    if (patch.name && (await db.select({ id: t.id }).from(t).where(and(eq(t.name, patch.name), ne(t.id, id))).get())) {
+      return apiError(c, 409, 'CONFLICT', 'A term with this name already exists', { field: 'name' });
+    }
     // Schema §5 lists no audit action for term edits, so none is written.
     const [row] = await db.update(t).set(patch).where(eq(t.id, id)).returning();
     return c.json(toTermDTO(row));

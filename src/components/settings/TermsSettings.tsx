@@ -1,15 +1,17 @@
 'use client';
 
-import { CheckCircle2Icon } from 'lucide-react';
+import { CheckCircle2Icon, PencilIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useActivateTerm, useCreateTerm, useTerms } from '@/lib/api';
+import { useActivateTerm, useCreateTerm, useTerms, useUpdateTerm } from '@/lib/api';
+import type { TermDTO } from '../../../shared/api';
 import { TermInput } from '../../../shared/settings';
 
 const day = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeZone: 'UTC' });
@@ -61,6 +63,88 @@ function AddTerm() {
   );
 }
 
+/** Rename a term or move its dates, e.g. when a semester is extended. The server rejects overlaps and duplicate names. */
+function EditTerm({ term }: { term: TermDTO }) {
+  const update = useUpdateTerm();
+  const initial = { name: term.name, startDate: term.startDate, endDate: term.endDate };
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) {
+          setForm(initial);
+          setError(null);
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost" aria-label={`Edit ${term.name}`}>
+          <PencilIcon className="size-4" aria-hidden /> Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit term</DialogTitle>
+          <DialogDescription>Change the name or move the dates, for example when the semester is extended.</DialogDescription>
+        </DialogHeader>
+        <form
+          id="edit-term"
+          noValidate
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const parsed = TermInput.safeParse(form);
+            if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check the fields');
+            setError(null);
+            update.mutate(
+              { id: term.id, ...parsed.data },
+              {
+                onSuccess: (t) => {
+                  toast.success(`Saved ${t.name}`);
+                  setOpen(false);
+                },
+                onError: (err) => setError(err.message),
+              },
+            );
+          }}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-term-name">Name</Label>
+            <Input id="edit-term-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-term-start">Start</Label>
+              <Input id="edit-term-start" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-term-end">End</Label>
+              <Input id="edit-term-end" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+            </div>
+          </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </form>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button type="submit" form="edit-term" disabled={update.isPending}>
+            {update.isPending ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TermsSettings() {
   const { data, isLoading } = useTerms();
   const activate = useActivateTerm();
@@ -88,7 +172,8 @@ export function TermsSettings() {
                   <TableCell className="text-sm text-muted-foreground tabular-nums">
                     {fmt(t.startDate)} – {fmt(t.endDate)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="flex items-center justify-end gap-2">
+                    <EditTerm term={t} />
                     {t.isActive ? (
                       <Badge className="bg-success/10 text-success">
                         <CheckCircle2Icon className="size-3.5" aria-hidden /> Active
